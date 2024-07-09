@@ -1,0 +1,1596 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+	<meta charset="UTF-8">
+	<title>Territorial Custom Maps</title>
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="" crossorigin="anonymous">
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="" crossorigin="anonymous"></script>
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" rel="stylesheet">
+	<style>
+        @media (max-width: 767px) {
+            .mapDisplay {
+                height: 100vw;
+            }
+
+            .importButton {
+                margin-top: 0.5rem;
+                margin-bottom: 1rem;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .optionMenu {
+                width: 350px;
+                max-height: 100vh;
+                overflow-y: auto;
+                direction: rtl;
+            }
+
+            .optionMenuChild {
+                direction: ltr;
+            }
+
+            .mapDisplay {
+                width: calc(100% - 350px);
+            }
+
+            .importButton {
+                margin-top: 0.5rem;
+                margin-bottom: 1rem;
+            }
+        }
+
+        @media (min-width: 1400px) {
+            .optionMenu {
+                width: 650px;
+            }
+
+            .mapDisplay {
+                width: calc(100% - 650px);
+            }
+
+            .importButton {
+                position: absolute;
+                top: 0;
+                right: 0;
+                margin-top: 0.5rem;
+            }
+        }
+	</style>
+</head>
+<body>
+ 
+<div class="container mw-100">
+	<div class="row mh-100">
+		<div class="optionMenu">
+			<div class="optionMenuChild position-relative">
+				<h2>Custom Map Options</h2>
+				<button class="btn btn-secondary importButton" id="import">Import settings from JSON</button>
+			</div>
+			<div class="row optionMenuChild">
+				<div class="col-sm-12 col-xxl-6 mb-3">
+					<label for="mapSelect">Choose a preset map:</label>
+					<select id="mapSelect" class="form-select mt-3 mb-3"></select>
+					or upload a custom one:
+					<div class="w-100 mt-3 mb-3 ratio ratio-1x1" id="drop">
+						<input type="file" id="file" accept="image/*" class="d-none">
+						<label for="file" class="border rounded-2 d-flex justify-content-center align-items-center" style="border-style: dashed !important;">
+							<img class="d-none m-3 text-center" style="max-height: 90%; max-width: 90%" id="preview" src="/web/20240402034213im_/https://platz1de.github.io/BetterTT/maps/" alt="Preview Image">
+							<p id="file_desc">Upload or Drop an Image here</p>
+						</label>
+					</div>
+					<label for="url" class="d-none"></label>
+					<input type="text" id="url" class="w-100" style="all: inherit" placeholder="Paste or Drop an Image URL here">
+				</div>
+				<div class="col-sm-12 col-xxl-6 mb-3">
+					Options:
+					<label class="d-none" for="seedInput">Seed</label>
+					<div class="input-group mt-3 mb-3">
+						<div class="input-group-text input-group-prepend">Seed</div>
+						<input type="text" id="seedInput" class="form-control" placeholder="Insert Seed">
+						<div class="input-group-text input-group-append" id="random" type="button"><i class="fas fa-dice"></i></div>
+					</div>
+					<label class="d-none" for="sizeXInput">SizeX</label>
+					<label class="d-none" for="sizeYInput">SizeY</label>
+					<div class="input-group mt-3 mb-3">
+						<div class="input-group-text input-group-prepend">Size</div>
+						<input type="text" id="sizeXInput" class="form-control" placeholder="X Size">
+						<div class="input-group-text">x</div>
+						<input type="text" id="sizeYInput" class="form-control" placeholder="Y Size">
+						<div class="input-group-text input-group-append" id="link" type="button"><i class="fas fa-link"></i></div>
+					</div>
+					<div id="normalize">
+						Normalize Map:
+						<label class="d-none" for="landTargetColor">Land Search Color</label>
+						<label class="d-none" for="landColor">Land Color</label>
+						<div class="input-group mt-3">
+							<div class="input-group-text input-group-prepend" style="width: 40%"><i class="fas fa-globe me-1"></i>Land</div>
+							<div class="input-group-text ratio-1x1" id="landTargetColor"><i class="fas fa-eye-dropper"></i></div>
+							<div class="input-group-text" style="width: 42px">-&gt;</div>
+							<div class="input-group-text" id="landColor"><i class="fas fa-palette"></i></div>
+							<div class="input-group-text input-group-append d-flex justify-content-center align-items-center" id="normalizeLand" type="button" style="width: 42px"><i class="fa fa-xmark"></i></div>
+						</div>
+						<label class="d-none" for="waterTargetColor">Water Search Color</label>
+						<label class="d-none" for="waterColor">Water Color</label>
+						<div class="input-group mt-3">
+							<div class="input-group-text input-group-prepend" style="width: 40%"><i class="fas fa-water me-1"></i>Water</div>
+							<div class="input-group-text" id="waterTargetColor"><i class="fas fa-eye-dropper"></i></div>
+							<div class="input-group-text" style="width: 42px">-&gt;</div>
+							<div class="input-group-text" id="waterColor"><i class="fas fa-palette"></i></div>
+							<div class="input-group-text input-group-append d-flex justify-content-center align-items-center" id="normalizeWater" type="button" style="width: 42px"><i class="fa fa-xmark"></i></div>
+						</div>
+						<label class="d-none" for="mountainTargetColor">Mountain Search Color</label>
+						<label class="d-none" for="mountainColor">Mountain Color</label>
+						<div class="input-group mt-3">
+							<div class="input-group-text input-group-prepend" style="width: 40%"><i class="fas fa-mountain me-1"></i>Mountains</div>
+							<div class="input-group-text" id="mountainTargetColor"><i class="fas fa-eye-dropper"></i></div>
+							<div class="input-group-text" style="width: 42px">-&gt;</div>
+							<div class="input-group-text" id="mountainColor"><i class="fas fa-palette"></i></div>
+							<div class="input-group-text input-group-append d-flex justify-content-center align-items-center" id="normalizeMountains" type="button" style="width: 42px"><i class="fa fa-xmark"></i></div>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-12 col-xxl-6 mb-3">
+					<label for="gameMode">Game mode:</label>
+					<select id="gameMode" class="form-select mt-3 mb-3">
+						<option value="0">Battle Royale</option>
+						<option value="1">Teams</option>
+						<option value="2">Zombies</option>
+					</select>
+					<label class="d-none" for="spawnSeed">Seed</label>
+					<div class="input-group mt-3 mb-3">
+						<div class="input-group-text input-group-prepend">Spawn</div>
+						<input type="text" id="spawnSeed" class="form-control" placeholder="Insert Seed">
+						<div class="input-group-text input-group-append" id="spawnLink" type="button"><i class="fas fa-link"></i></div>
+						<div class="input-group-text input-group-append" id="spawnRandom" type="button" style="opacity: 0.5"><i class="fas fa-dice"></i></div>
+					</div>
+					<label for="mapName">Map data:</label>
+					<input type="text" id="mapName" class="form-control mt-3 mb-3" placeholder="Map name">
+					<label class="d-none" for="mapDescription">Description</label>
+					<textarea id="mapDescription" class="form-control mt-3 mb-3" placeholder="Description"></textarea>
+				</div>
+				<div class="col-sm-12 col-xxl-6 mb-3">
+					Player:
+					<label class="d-none" for="selectableName">Player name</label>
+					<div class="input-group mt-3 mb-3">
+						<div class="input-group-text input-group-prepend">Name</div>
+						<input type="text" id="selectableName" class="form-control" placeholder="Insert forced Name">
+					</div>
+					<label class="d-none" for="selectableColor">Player color</label>
+					<div class="input-group mt-3 mb-3">
+						<div class="input-group-text input-group-prepend">Color</div>
+						<div class="input-group-text" id="selectableColor"><i class="fas fa-palette"></i></div>
+						<div class="input-group-text input-group-append d-flex justify-content-center align-items-center" id="clearColor" type="button" style="width: 42px"><i class="fa fa-xmark"></i></div>
+					</div>
+					<label class="d-none" for="playerTeam">Player Team</label>
+					<select id="playerTeam" class="form-select">
+						<option value="0">Team 1 (White)</option>
+						<option value="1">Team 2 (Red)</option>
+						<option value="2">Team 3 (Green)</option>
+						<option value="3">Team 4 (Blue)</option>
+						<option value="4">Team 5 (Yellow)</option>
+						<option value="5">Team 6 (Magenta)</option>
+						<option value="6">Team 7 (Cyan)</option>
+						<option value="7">Team 8 (White)</option>
+						<option value="8">Team 9 (Black)</option>
+					</select>
+					<label class="d-none" for="selectableSpawn">Player spawn</label>
+					<div class="input-group mt-3 mb-3">
+						<div class="input-group-text input-group-prepend">Spawn</div>
+						<div class="input-group-text" id="selectableSpawn"><i class="fas fa-user"></i></div>
+						<div class="input-group-text input-group-append d-flex justify-content-center align-items-center" id="clearSpawn" type="button" style="width: 40px"><i class="fa fa-xmark"></i></div>
+					</div>
+					<button id="addBot" class="btn btn-primary mt-3 mb-3">Add Bot</button>
+				</div>
+			</div>
+		</div>
+		<div class="mapDisplay d-flex flex-column">
+			<div class="flex-grow-1 d-flex justify-content-center align-items-center">
+				<canvas id="canvas" class="object-fit-contain d-none" style="image-rendering: pixelated"></canvas>
+				<canvas id="overlay" class="position-absolute d-none" style="image-rendering: pixelated"></canvas>
+				<div id="loading" class="position-absolute bg-dark p-3 rounded rounded-3 bg-opacity-75 d-flex">
+					<div class="spinner-border text-primary" role="status">
+						<span class="visually-hidden">Loading...</span>
+					</div>
+					<span class="text-center ms-3 my-auto" id="loadingText">Loading...</span>
+				</div>
+			</div>
+			<div class="d-none my-3" id="edits">
+				<div class="d-flex justify-content-center">
+					<input class="form-check-input ms-4" type="checkbox" id="credit" checked title="Adds a link to this page to generated json (thx for leaving this on ❤)">
+					<label class="form-check-label ms-2" for="credit" title="Adds a link to this page to generated json (thx for leaving this on ❤)">Include credit to this tool</label>
+				</div>
+				<div class="d-flex justify-content-center">
+					<button class="btn btn-success me-2" id="save" title="Save as a JSON file to import in Territorial.io">Save to JSON</button>
+					<button class="btn btn-secondary" id="copy" title="Copy as JSON data to share with your friends">Copy as JSON</button>
+					<button class="btn btn-primary ms-2" id="image" title="Only save image (only contains parts of the data)">Save as Image</button>
+				</div>
+			</div>
+			<div class="text-center text-secondary">Created by platz1de (sdsd) - Map generation by David Tschacher (<a href="https://territorial.io/" class="text-decoration-none">Territorial.io</a>)</div>
+		</div>
+	</div>
+	<div class="position-fixed top-0 bottom-0 start-0 end-0 d-flex justify-content-center d-none" id="botSettings">
+		<div class="bg-black bg-opacity-75 m-auto p-3">
+			<h3>Bot settings</h3>
+			<label class="d-none" for="botName">Bot name</label>
+			<div class="input-group mt-3 mb-3">
+				<div class="input-group-text input-group-prepend">Name</div>
+				<input type="text" id="botName" class="form-control" placeholder="Insert Name">
+			</div>
+			<label class="d-none" for="botColor">Bot color</label>
+			<div class="input-group mt-3 mb-3">
+				<div class="input-group-text input-group-prepend">Color</div>
+				<div class="input-group-text" id="botColor" style="width: 15%"><i class="fas fa-palette"></i></div>
+				<div class="input-group-text input-group-append" id="botColorRandom" type="button"><i class="fas fa-dice"></i></div>
+			</div>
+			<label class="d-none" for="botTeam">Bot Team</label>
+			<select id="botTeam" class="form-select mb-3">
+				<option value="0">Team 1 (White)</option>
+				<option value="1">Team 2 (Red)</option>
+				<option value="2">Team 3 (Green)</option>
+				<option value="3">Team 4 (Blue)</option>
+				<option value="4">Team 5 (Yellow)</option>
+				<option value="5">Team 6 (Magenta)</option>
+				<option value="6">Team 7 (Cyan)</option>
+				<option value="7">Team 8 (White)</option>
+				<option value="8">Team 9 (Black)</option>
+			</select>
+			<label class="d-none" for="botStrength">Bot strength</label>
+			<select id="botStrength" class="form-select">
+				<option value="0">Very Easy</option>
+				<option value="1">Easy</option>
+				<option value="2">Normal</option>
+				<option value="3">Hard</option>
+				<option value="4">Harder</option>
+				<option value="5">Very Hard</option>
+			</select>
+			<button id="botDone" class="btn btn-success mt-3">Save</button>
+			<button id="botDelete" class="btn btn-danger mt-3">Delete</button>
+		</div>
+	</div>
+</div>
+<script>
+	//@platz1de - 2023
+
+	const mapSelector = document.getElementById("mapSelect");
+	const fileInput = document.getElementById("file");
+	const fileDesc = document.getElementById("file_desc");
+	const fileDrop = document.getElementById("drop");
+	const urlInput = document.getElementById("url");
+	const preview = document.getElementById("preview");
+	const canvas = document.querySelector("canvas");
+	const overlay = document.getElementById("overlay");
+	let mapInput = null;
+
+	function setLoad(text) {
+		document.getElementById("loading").classList.remove("d-none");
+		document.getElementById("loadingText").innerText = text;
+	}
+
+	function unsetLoad() {
+		document.getElementById("loading").classList.add("d-none");
+	}
+
+	let currentProcess = null;
+
+	function checkProcessStart(start) {
+		return currentProcess === start;
+	}
+
+	fileInput.onchange = function () {
+		const file = fileInput.files[0];
+		const img = new Image();
+		const url = URL.createObjectURL(file);
+		img.onload = function () {
+			fileDesc.innerText = "Loading file...";
+			preview.onload = function () {
+				preview.classList.remove("d-none");
+				fileDesc.classList.add("d-none");
+			}
+			preview.onerror = function () {
+				preview.classList.add("d-none");
+				fileDesc.classList.remove("d-none");
+				fileDesc.innerText = "Invalid Image";
+				fileDesc.classList.add("text-danger");
+			}
+			setMap(img);
+			URL.revokeObjectURL(url);
+		}
+		img.src = url;
+		preview.src = url;
+	}
+	fileDrop.ondrop = urlInput.ondrop = function (e) {
+		e.preventDefault();
+		this.classList.remove("bg-secondary");
+		if (e.dataTransfer.files.length > 0) {
+			fileInput.files = e.dataTransfer.files;
+			fileInput.onchange(undefined);
+		} else {
+			urlInput.value = e.dataTransfer.getData("text");
+			urlInput.onchange(undefined);
+		}
+	}
+	fileDrop.ondragover = urlInput.ondragover = function (e) {
+		e.preventDefault();
+		this.classList.add("bg-secondary");
+	}
+	fileDrop.ondragleave = urlInput.ondragleave = function (e) {
+		e.preventDefault();
+		this.classList.remove("bg-secondary");
+	}
+	urlInput.onchange = function () {
+		preview.src = urlInput.value;
+		fileDesc.innerText = "Loading file...";
+		preview.onload = function () {
+			preview.classList.remove("d-none");
+			fileDesc.classList.add("d-none");
+		}
+		preview.onerror = function () {
+			preview.classList.add("d-none");
+			fileDesc.classList.remove("d-none");
+			fileDesc.innerText = "Invalid URL";
+			fileDesc.classList.add("text-danger");
+		}
+		const img = new Image();
+		img.onload = function () {
+			setMap(img);
+		}
+		img.src = urlInput.value;
+		urlInput.value = "";
+	}
+
+	function setMap(image) {
+		canvas.width = image.width;
+		canvas.height = image.height;
+		const ctx = canvas.getContext("2d");
+		ctx.drawImage(image, 0, 0);
+		mapInput = {type: "image", data: ctx.getImageData(0, 0, image.width, image.height)};
+		finishMapLoad();
+		preview.classList.remove("d-none");
+		fileDesc.classList.add("d-none");
+		const eu = defaultData[10], halo = defaultData[9];
+		sizeXInput.original = image.width;
+		sizeYInput.original = image.height;
+		landTargetColor.value = landColor.value = "#" + (eu.landColor[0] << 16 | eu.landColor[1] << 8 | eu.landColor[2]).toString(16).padStart(6, "0");
+		waterTargetColor.value = waterColor.value = "#" + (eu.waterColor[0] << 16 | eu.waterColor[1] << 8 | eu.waterColor[2]).toString(16).padStart(6, "0");
+		mountainTargetColor.value = mountainColor.value = "#" + (halo.ez[8] << 16 | halo.mm[8] << 8 | halo.ce[8]).toString(16).padStart(6, "0");
+		updateNormalizer();
+		if (normalizeLand || normalizeWater || normalizeMountains) {
+			normalizeMap();
+		}
+	}
+
+	//The following parts are modified bits from Territorial.io by David Tschacher
+	const colorConf1 = {landColor: [120, 105, 92], waterColor: [12, 12, 60], glow: [300, 300, 9827, 26, 18, 36, 36, 8, 32, 3, 9]};
+	const colorConf2 = {landColor: [140, 130, 120], waterColor: [12, 12, 76], glow: [240, 120, 1024, 30, 19, 30, 70, 8, 20, 3, 9]};
+	const colorConf3 = {landColor: [130, 117, 106], waterColor: [12, 12, 68], glow: [270, 210, 1024, 28, 19, 33, 50, 8, 26, 3, 9]};
+	const defaultData = [
+		{name: "White Arena", width: 230, height: 230, g7: 1E3, g4: 2E3, seed: 173, bt: [0, 5E3, 8E3, 1E4], ez: [220, 250, 255, 220], mm: [190, 220, 0, 0], ce: [170, 200, 0, 0]},
+		{name: "Black Arena", width: 800, height: 800, g7: 100, g4: 50, seed: 43, bt: [0, 4E3, 5E3, 6E3, 1E4], ez: [25, 0, 100, 0, 25], mm: [25, 0, 0, 0, 25], ce: [25, 0, 0, 0, 25]},
+		{name: "Island", width: 512, height: 512, g7: 128, g4: 32, seed: 0, bt: [0, 500, 2500, 2999, 3E3, 3200, 4200, 5200, 5700, 8800, 1E4], ez: [15, 15, 70, 40, 40, 40, 252, 40, 40, 20, 30], mm: [80, 80, 190, 90, 40, 40, 248, 180, 180, 90, 140], ce: [120, 120, 220, 110, 40, 40, 217, 10, 10, 10, 10], h1: [0, 205, 256], h2: [500, 500, 0]},
+		{name: "Mountains", width: 960, height: 960, g7: 60, g4: 8, seed: 0, bt: [0, 400, 1800, 2E3, 3200, 4500, 6E3, 7700, 8500, 9500, 1E4], ez: [10, 10, 20, 10, 30, 10, 16, 40, 55, 230, 230], mm: [10, 10, 40, 50, 100, 40, 80, 120, 55, 230, 230], ce: [80, 80, 200, 10, 60, 10, 16, 40, 55, 230, 230]},
+		{name: "Desert", width: 900, height: 900, g7: 100, g4: 5, seed: 0, bt: [0, 300, 1400, 1700, 3E3, 4E3, 1E4], ez: [10, 10, 20, 10, 10, 170, 212], mm: [20, 20, 60, 100, 100, 110, 170], ce: [70, 70, 160, 30, 30, 60, 120]},
+		{name: "Swamp", width: 1E3, height: 1E3, g7: 100, g4: 40, seed: 0, bt: [0, 1E3, 3E3, 3500, 4E3, 4500, 7E3, 7500, 8E3, 1E4], ez: [10, 10, 20, 10, 5, 10, 20, 5, 20, 25], mm: [30, 30, 50, 100, 30, 100, 140, 60, 140, 200], ce: [80, 80, 200, 10, 5, 10, 20, 5, 20, 25]},
+		{name: "Snow", width: 1E3, height: 1E3, g7: 100, g4: 20, seed: 0, bt: [0, 700, 2650, 3200, 5E3, 8E3, 1E4], ez: [10, 10, 60, 255, 255, 200, 200], mm: [10, 10, 60, 255, 255, 200, 200], ce: [80, 80, 255, 255, 255, 200, 200]},
+		{name: "Cliffs", width: 1024, height: 1024, g7: 128, g4: 32, seed: 0, bt: [0, 400, 1999, 2E3, 3200, 4E3, 4700, 5500, 6500, 9500, 1E4], ez: [10, 10, 80, 255, 255, 55, 6, 70, 20, 155, 255], mm: [10, 10, 90, 245, 245, 170, 80, 190, 20, 155, 255], ce: [80, 80, 255, 235, 235, 55, 26, 10, 20, 155, 255], h1: [0, 380, 512], h2: [500, 500, 0]},
+		{name: "Pond", width: 820, height: 820, g7: 200, g4: 100, seed: 0, bt: [0, 700, 1300, 1900, 1901, 2500, 3400, 6E3, 1E4], ez: [25, 30, 30, 30, 255, 255, 30, 40, 20], mm: [25, 30, 150, 150, 245, 245, 80, 150, 70], ce: [60, 170, 170, 170, 235, 235, 30, 40, 40], h1: [0, 120, 210], h2: [0, 80, 640]},
+		{name: "Halo", width: 1024, height: 1024, g7: 128, g4: 32, seed: 0, bt: [0, 400, 2009, 2010, 3300, 4E3, 5200, 6500, 8E3, 9500, 1E4], ez: [10, 10, 80, 255, 255, 55, 23, 36, 20, 155, 255], mm: [10, 10, 90, 245, 245, 170, 60, 160, 20, 155, 255], ce: [80, 80, 255, 235, 235, 55, 9, 72, 20, 155, 255], h1: [0, 70, 180, 200, 290, 420, 512], h2: [500, 500, 0, 0, 500, 500, 0]},
+		{
+			name: "Europe", ...colorConf2,
+			data: "DYDz2ESNu-0UYCCrS9c3pBUrKHc94BhIBhIJpIIBnMIAAIrKSSpKABmgf9e7X7ecX-5P0baOy191XXX7eegf9mcfUrrxrKppppKpKSrzUMMMSKKKrJcXcXcmgcXnKIKBmnCIJonCKrrSrrSSxSS9XcJnBe9XemmWXeX99chMIAEprrSrrtbrxIrMKBn9eBcecX9X7f99X90e577VX1VcOWX16XX7X999cX7eWyXXccVVX6rUSrrwUrlzpbbrrU6xzztzxzrztzbaOtaOa5-0WV-77e-9119HcXXZecccceXXX7ce9Xcce9e9meeVof919ee9Wzy5XeXYS9KBcXee_He6ce1ee0zxzta5UaX99c1mXcXhEJp9cNHWcTN9BcnAzJoorIBe0c--nIJoonSIBe-OX-NNOXWbcBgzIHX9xHzS9mcCSI9-nBrrorK9VcP-jHe9_BhxzKHcWC9mZp9-3n9fBnS970a6zs7egrIAAIRUKocXX9gx9npKaUxBppABe5OdHpBe-AC9-17TOWABpKI9-7JmnC6zGtxIBmen9egp6aUlyOzbrbbqUzxHXgjKKBc-ZehlxoeeoxObonox9XonAUbzS9efBdCAArHmjISBhEJnAofBUIJgrpocXxIBUoxHVmnBmmXAExoUxABmdAIBgnBonIAC6oxHVgfMHcXcUXAAGxIBgfxJch9c3enCMzSBe9eXomxHeBgmeCSBgpKMp9hzHfIEzHnArSxHX7pSrUHcnCMrUpSa5UIonABrSBccnBopJttzbxpBonHXpIEKMrMSrxpKxzUzltyUtaTOaOaObaT5UzNTOV0c116rMMKSKrxIKpJpKMSKMGxISCrKMSpKMKrSpSpI9xp9_pMMMMSBoxSryTUUxa5P7-0ttbWzzzxzaN5-NOWVN--0Wa5-0X-0VNVN7TOzaOWzL0bbX0y7NN5Ua17V111749c79e1c-V-----Ow7--N57-OzaN0ba156byNNT6q5OzWaT55-OsOX1777Oa55-5T5UX16tzUOyUtzrpzUrSKKSSAoemnKCIAIICI9KHn9CKBhCSHgenSAJnIJxSMMKKSSpKoopKKHpSoorSzxpWxMS-UKISaOxMOxttyOzy5OzbbtyTOzbtaUxyUyTT6porUrSztzzMSp9eceoogeZp9ZxJx9geeeXe9eZgeC9gegemp9gmpKMSonSxKrrbaUMIKJpMKKKpIACBmeccV71XX7V1mmmmhCCCKJompKKJpMKSKSKpKMJpKBeeceenKpzHnBnBmceee-X1117ememfBn9mfCBmgemf9mfBmf9xromcec7Us8He0u99cWtbc-PeCCS9VecZnBnBemfBn9X9c6aOXA997Y99755VXc6tXXmV5Os-ObVN0yN0bzaT-7ec7N70Wa-OV-5eggnHon9f9efCBpMzop97epCKIpSIBpKrrSKKIKKMKMJehzKKErJeABnIAJc717f9eBnAJzrHe7V9d9ef9gmopKUKC9gmcV6tX73eCIJoonIBnBnBgnCHgjJeZfA9megeegfKCICCJnIA9meZf9mfIEMof9XceXe97X-59XdCIKKpKKCJoeVcf97mZmVVV199YJmX7gceY9gpEOxMMJecrSSGzOxSrxprSxzJzUopSrIxKBpUMIpMprSropEMHnBrpprK91AJpJpIICpBopICCJonKBn9mcme9VcX9ee7X7e9ece9Xe19XcX91Xee9Xcce9VVVccefAAABe7emhBnSSKMSIJhCIJpKJppCKKIIIICJgpIBpAIHpBcoooonIKLObpBnKlzrKIKCJpCJpBnBpUzrrxpxSbbwUxzUprpppppJppMMIrrSSRUbWsOwUzUltbzrxzUzSzUbrrTTUUrSbbV6WbaTOzxzyN5TN-T5TOxbtts71-X-70V0sOWsObbaT0sTObw70tbbzbxbzzyOtyUtbyUaOV1-N0cVN-50aOtza6tzlxzUxSrzUzSSxUSzzOzzs5OyOtyOyUztyObaNOtaUrUxrrUSrrUrMSJrSIMSpKISzKUSpSrSSrzSMMxMSrMSpSrUzSSzzrTUMSpprSzMSzUxSSIEUSrzrUSpMKKxpKrKMKBmmrIKBgpKrzs6VOsUa--5ObzyN77-7X7e970V-5Oa5ObzxSxrzzSrKMUw-OV17X7X1X99X97X9X99cXXXXX977OaOVXeeeeecX7cX7X7X177-7-X-71-7XX97X97cX7VVV1--VObs970cVObtzbtyObrzxSomdKKSSMKqTN5NN0xrMIM5UrKKKpEKrSMSMprSrxMMUzrzrzSrSrSrHXenOtxrrxrxzSrrSrUrrSrSxMSxxKJpKKKJnKKrKIUUSrSrKKzKxKrSrSwUxIBnrxpSSpUzyOzzzzyUSxzRUpCBee7ecXce89omegpIBrpxzSrMJnKrMSFT0tbrMKxKL0VObxprSSlXV-11-c-X-WxzxFUaPcX777OzztzrSrMV-V75X96zzMKrUa9e-7V17gc9XeV90Bf957cVOzrMOX17X7X-X7X7V-N-6aUxCKzUUKprcX-UzSrN17WzrxrNX7ecV17WzzbaOtbxraObrOxrbxwUxpUzrzraOy5OVOWtzyOzzxbzVNXccXcXcX1-V197V-ec5Oy5N1--555UyN-N1---VOWX0Wtcc0aUMMyOs----Zc5-TOtsOWX7c0xzLN-NWbyOyUyUzrbxJe9gfTUxAMxrxzlbzbzbq5UKrJnAABnAAICETUtxSrzrpIpKIUSxraOaOVNTObzWa5NOtxxyOyOc-5A9YBmnBfHceX7-XXcX9e9Y9e5OzUbxSyVUX5OcUa1-UMqNNUbyOtsUWtWbWaObtzbyUWy6bzpJmoh9nIUI99oghSUzrrrSHeHohKCJgrKJemgcrS9nry6xSrUMStxzUSzqUrbrUxUSxxrrprUU6zSrbrtzUSUSzxMKxSMprMKIIIoonIBmohAIAHgf9eHeemfI9nA9mf9c9n9ZeXc9d9n9ccX7VZmoceeHVX1Zn9meZegegegfBhABehABonAHnABhCIBemee9eBfBeecgeohCUxzUbzxI9egegfAUUrHmegemecWcfCUp9meX9Beeef9onrSpAAKKKIyOzyUzJnBjSrxSSIBhMSHgcVYKxBmnzrROzpzxzSKKCKUzKBnoUzzbzpJmegfzyUzFObyUzrrzpKUSlzry6sUyUVN-7NOzbzzlzrzUrUSrrURUxzbzsTUsUWts5NOWa5ObzrUxrtyOWWaOzMSJnIAIprMJorKMIrSKMKKpUKCBonKMJnCJpCIKIKMJmpKIMKJpCJpBxBonHomoemmegnHf9f9cX7ce99emecgn9h9eA9nCHgfBnAIBfHh9eXXce9emec7f9ec1me89eeceme89fHeemX77-ceeeemeX9X9eeecV-V9e9Xe7e9eefBnBeefBfHmnBnBnKBpIEpKxMSKJnBpBnBnBmgmeeX9cXXVcX7Xce1eXcXe7ee9eXeeeX9X7V7V77V--XcXee7ec7X9eXXceX9f9eeee997X9Ve7Zee7WaX5X2Be-cee17X--0tsUbtaT0ta5-Oc--7Xe-X7--OVUtbVT--QA9nBmcXV--97X9ememggnBecJceeXme-cXdABeXeX97cnHgeeI9IA9XcVX7eX99e9e9mgeXeXemmceZmXe9ceXemXmggf9mmnAI9X1eIHcXfBghBmf9BemcX9Y9Ve9--JmZeccXA9Xd9cX9VXVVc7-V-Xee_BnJhIIBnJnBmohBgohBcmmf9eHf99Hf9HmommmmV5N-MvxppxrIICWzsOxX--OV5s0i1mopMKppzTOaN-0XXceV--0lJ7-90mzBlV2N7tRof9JqUsOaW7c8bwrrJchpK9-X7PBfHjKogcP0Jd92SMUwUlxMSErHegnrlxI9X7cY99e7hSzxpxSIIUHozogmgecYIExxxrrrKpKrSrMMrrlxtyUtxblxUyTUbyUUSaUy6Wzttbbc5N5N7V7XWaT7V6aZeVWsV9nIA9X2BmcWc7ooc--f9IBomV-0cnICBeXgn90Wc5TOa7-1-5cX---d11---esD---m8D-1VvAYqV-92glC5--NEEiqV-7Hsjk014I4wognBxwOs0Wc-D4y4gcT--0Y8X-0WalAk--0pHX-1Wsy6EV-a7EDhCBtaT9--X3IIV--_VJV0Ndepmzq1-0XeJbD-5XhvrCqTe-07iCnpteV-7iejk-iAtCxEIrrX71-2smknnEUUpze-e-c-1BtMB--2Kbq--YMmzV-sqPmrF7--Culc-HCwyxxcV-DEWXhte-DZ7mzorSr56eX170LG-rUSrSItzOueVc93c-5ZH-rrRP9-2d613nHdRUR6kP7-CZVZUEKUyUe91e-2ZYhnTPV-t8OMny7-1HZrT-DZf16A9mjFUzlsV--Hh_N-1HlyB-CZhCrSpzrkX7cX-2ZibAr-VMdC8brSrzUxSSIBxpHX17c8CrJe7rrUIpSrUxxzSrMIMOs5OVV7X7X7977V-7P19Xcce--8DNHk-LIcPSpN7-0ODtgnMN1-7Zz5USxyX9c--J2As-9J2CSu-08FHSrR7V-0G5xV-OH5vqV-0LEoV0OLiAnMN70D_f4UKIBnSBgzSrSxSSMSxpSpppzc-5TTUMbV716s117X1Xcce-cXXHcX--0Rs7V3dS04nKonpSSkV7----TMGPxrS-V7--MN-c0HMYnBnrIAIrK-OWV75V-tTEHotV-qMoqSMUUbe9HXV-mNcawnr6xtcVe-3aNiUIq1-6aOwMISlc1-6aSe6rROec-8ac9fISzuX-V1tf-1mnBrlWaN-NajMY9ggeoopCTTTTN6aN1HdgkXoohABnK9n9KJmpogeV-0XJenppSrUzJgghomhp9VnxIAAzOxWbbrIBnJmenBegozlWyObxIKBonIGaOVT50xSk6xJpEpIHnBonBoptxpr56xrzzbonCBnCMMSonzxJmopCIJomX7mceHcV7nJxSABhrbxEKCIJhAA9HgenABrUMbqUpSUrprSrbzzp9hABeXce9YAHcoomnBmmnBmmnpzaTTUrzzMpzWWblbyUUSrUrxbbzzblxrUUbrzSrtztzw6btV19ceWXWzq0aU6aTOta0a0V5777Xce7nA97VOa0X-17VUVV0V17-17X7V7-V----1-V-VcX9A9cWbbzyV-U5T5TOa5NNOaOV1Xe9ce99mZee5OtcWbaTTTTTOWe9ZeXcmcXVV38gtRnCMzSw1X6VcV08hu4rq9--tiGRrac-1Qfbg-dax4zrrIKoeBxErUlzSGbs0VP3eXX97XV-9R0KCsV1OlXjprrP7X7-HRQsCpVc2TRgLxJrKBeKKJe7BhIKKBlwOaUrNTUsNNNcNP91V---PS6VgopVN-LbHRrK999ezrxxoy5Tc7-0bJGjF--6Spy-5bU7rSbuXV4tsIYpKSSrSp50aX-177e-2baNMC5-2Otd7nHrpOba7cV2tv2dnICxz-Uk7cc0mUIkRnBpCBpCIJOWa0VNOtc-19UQnBeegmnIISxJns56zaOWtu7TV--URWN--VDLc-eVE7zSrUX7Xc-5WM4BN1DWTIggpBnEKKKESCWV5T5Wa-N0a9VsP6YRn9cmY9JggoggzUKHfA9XmcP9XZfIJhronABfISpxrUrrI9ABnBggrxxoe9fHmeBdCDUUrHf9orUogrzzJfUU6zUzbbbzrty6brbrxxz57OtsN5OsN5V5VT5V57N56yTUtsNN1cNNVV5VNeeeZeWtu77-XX-KgxCqWVV-P8w5qV-uAjtz5c15XwhBooopBonIKKJNN5-N5-6WVN-8ckmzArUOVeV-uDoWxNV--YoA7-TYoYRoxa57-1_P1T--8NKD-9dNS2ACAUta---dQzr-DPM79mmgcpI9chMKCppxxxrSzIbXc0aT1WVOxk7-N-9c0eauZgfAKrSrrSla-5-7n9-V1eVE3nKUwNVcV0eWZinCF5N0TcbkCMSrzr5OVPXCA9VXV-1b0uV0ezUBxUsXc--mhTc--n9_c1DnTIxCCSMKC9eCKClsT5OsN-V7NNV6QJcYxzUSxzSwUa7X9I99Xd9X-BhW8EE6rUw7ceV6fXkApBmf9f9hKGaOWzzzObV1V-PuipRpJ5--6iiarprP77--DrhL-0iv-fN-7jNKjExzXcc-Y1kshKK-5-V-wF2umWs-03EWs-03_Ms-23gdy-qlmyACJmcgfBnCIIrKpICUSIprUa0VOV5N5---V5---wRnFru7-E6kMClX-4lwIAzq9c-A7r-z5V7gdk8monBgfCCCElzbzxsN995-T5-KgiSunBnABmeeIHprrKJxpIISKICJpKprUzOcOzzUTN---0V--50aN1-1-PV7XX-SnCeY9f9mnUSSKzMtaOWa9VX--bBy1gzSxX-e-4nFNEAqTc-6C7Wgs-EC_DBjN-0nVb2N-3n_EYByN--nfWnV1Bx8ZorUaV9-CnqgbKISrNN9-9-8o5aACrSVWXV-C0gPk-jFRwSM6rsW9VV3h23TmfBjOxMUtaX17-6GYfE-0UHSjwfEzbxpUUq17ZcXeV-h8rqr--3odX6MF--8ogzvMJrN--V1xAI4npKwT7cV0Xp-Yf9nBeehKMKrzzSxrSxrUSzzSxrSMzSzzV-T-7V10Wa6VOWVT1mmeeegn9eeeXmcX97V-IJGnCr1--2JVvD-Bp7gzSxw6aeZcV0hHX5merts-EJjUhq7-2pGMvBtV-hJmVz1-1pJofqV-0KQ3c-0KztN-0L5k7-6LYvE--ILYxhTNc-0LZ57-ALu1CaV-4SIqV-hSQ3na--KpjX--ppknVESTPknBgmgn9f9f9onBmenSpMGzxbtbzbaOV6zbX9-NObWV-4TmmV3SToLnBnJnST5Oa-1-0px0YD-0pylvD--L3Ge--q54IV2CWmWnUUz5Pcec-nO-URhBoUy6VX-1qFuQGc-MOcagpR---CcERs-0PQUc3MPs8gehClzSzbzzUzxMr6tyUzzbzaTP0HgmcVXegeeeXeh9eX7e-JqqUEKIMpzz5T7cXX97-bRBpSKoT5X7--M4g1-grMIbBecemgfMxUpzMzObtu7V0zrrq7e9eV-MTaFhOy9VfLnt2-9-17117VcX1-1X97cVXX9177V-VXV9-WaOSMSSSSrrUSKMKxrrrUSxrrUzsOV7--N-tVN--N0bKIKKQCKRnKQCUtrTUtUSxpMprrUUKxSpxrpprMrxF-EcVGxTX"
+		},
+		{
+			name: "World", ...colorConf3,
+			data: "QREc7lR7oVUYGy_KJOJKKKKuK4OKT_K4KG_u_GJJO_3K_KKKL_4KL__KK_4_LKK_MjzuOOK_KKKOKLKKLLUjzji_KKMgyzdMjzgzzzEszzyzzjvuQvieeid_POOvzkzvzy_TvuOK4GKKvyyzzydJQi_OdKKaLOLajdOPuueaYBzydJdPOybvdbjeuvizwzujuQnunl2wBnBE2-EYBz2nk2kFzwBzznBydnwznEYwnnEBnnwkyvwzEgznzzEwwwwznnxK4KGOJ2zl2nzifvwyw-J0GGJ042nvzEvzwznJEnzlG42zg02KKGFzzEzzeT-woKK3EvoKLOJBnBnzE2EznnwnwznznzpJKKKKOOKG_G_LKFwl2zK8K4JK4KKKKKKKKKKKKF_g38EBemXeeeeeemeemgeXeegf9XgeeexCxzzzoenErMroeXeeegfEzSS9eVcghoeemf9YBe9ee9eXghrzzzKBfIUzrbzUzzzbryOxrzzbbsTXe9geY9egeeBeY91cUy6z6xtxbxzbzlzObrx6ztztue5UyT6zzbzbae7UxyOzzbzzbbtzyUyUtzztbyUzzbuecZeBeXeeecgeV--1ViZ-00JJIV379xwOLKKgzyzK2zF5g4ccBgcn9ggepUxAprzztxtyOzbzzbe90f9cXX99V-cAQAOx-PFLqqmemxp9zzttzIAzrrzzxzzze7X9ZeceX5ece---AorF0B4uUghzzae9-6VjJh_UznK---NUXV1NBEpOLYnzlJ--0X1X--Vl4pk-B5KYEc-D29vazJ-HkP9DmexzxxzzzrbztbseeeHeYHceXV-NC5uUF-R5YYCyX-2Vpc0jCF--5lM7-12TuM-hkQrZrS9X7f9e9enrSxrzaUxx9f9zzHhzUxqOaOsObbzSxoqUxyUY999c9Xcecce7eV5NDrSOLauUwzzzzEGK4K_0F2Z6YfEUoefUtzUzMyNNe9ceec0a2zdLQdyjwynxKKFznpGGJ--1-_X-AW0ZpjvnzCKKJ--1309--02HO---WrDV1sGfOOjzzn4KK-0FYN1qP-2W7RtfkF6J8G-geeemf9gemegfEbqUrxEbyTgecOwUbbxEbyTTUac-H3crrjCLEE1KoQBrofHegeecBefBeeegfAACxUHemeeeeegxrSrzxxoeeXXe9ecdAzUomXexzrzroeXeecc711_rI9nUSxxKMSryUzrzUpxKx9cV7cceghrrJnJmhBe9ee9VUrxy0a5-7e7VVX-7XccOVX99eefKKAAMxMIUxzMrxK9XXXXeXceXceee9mxxp9oeV9mf9eHgmeeWsXnHcmfA9oenJf9XcXcOby999exKKzMIJcceYBggghxrI9e9e99pxzpHeccceX110cXe7cXWzrUzUxzzrzrtzbaOcVcceXccce9Xceegcce6emeZe96buXeXoe7TZhBe2Bmc6eIBdC9eC9fHcHcAC9erxHed90C9MTUzoh9ZjJeofIAzHghHzI9nHYACCA9VxIHcfx9gmmnEJrKErJzSC9xrrrtyTOaUa0xSxKroxMSSrIMKqUlc6bztWx51--P7OyOy0tcX997V-NP6WsUaUbaOaX6VTOzzzxxpHnBnBggofCKSpJxUUo6pzzbtzyUzbxSzogfABeceef9mpSzoppI9e7X9nCCKMMK9fEI9ee19mfBgemh9W91WuI9gf9e5eX17N5NUXc0a1nBenUHfSorpMKMrHXh9XgmY9nMJmV1nIISC93fA9gnKBemp9e9XxKoeeeA9fSMzrxrpMSxMMHorIKII9eecgeceeee9gmghrKKCpKCIJonMozKJp6xyUzSppr5OttzzzzWWtyN5ObcV-5OaOWttyTTN5VWWbbzzrrxaOtbyNTUUrrSMMSpxrrSrUxxUUpSzSMKonIOaN6aVcVNOzUrL17ccXccVPeccX7717cXX-5V0zbzJxOboUKrKrrUxxrrSxxrSorIKSrMpUUISxxAESpGxrsVWzP7XXWzrrxVNXoccWcOcX-6xrV6tx0zxzUtbtzq99777WWVUV-50xaV0tsNUbzpUUzp9nUrpIyOzaUy9ge197e6zlbbbzbbyUzommhxonCHeIxxrxrxrUSxrUrrMKoogmmecmeeZcceX7eXHeeemmmn9eedCzHfoeeeZe_IMzIpoxHXKzUJxxUoUUprza0zxxxrUtyOaUUlbxIMKKKoopCIJpJoommeeeX9A9mmn9cce9Xe9ee19eXe17eA9mgnCKpJnBee7XXXcee7X-99XXeee9993cXV0ba5-XV0aOA919HgmeeBeY9mmX9ememef9ggn9ghA9mXcmeecX7gpCCCBnAAAABnCIICIKpJonCABnBgf9hBpBnBnCCCJonBnJnJonCIKprSKIMKKpJpCIKIIIHrSMpJjJxMpz6zHxCrrMMUSprKSIrMrMUUMrSxrSrSrrUUyTUbbtz6zbr6xxxtbtyOtyU56tzyUTUxzrSpxKMU6lWxzqNUSxpUxEMKJxCJnMKEUHhICEMrHxSUMSrMSrSppppMKMSSMKpKBxMKpppKKCBnCBopIKIKCEKCKKMMSpppSSSMMMMSSKKKKpSKKSKSMMMSrSSSMKpSSSppKICppMrUSyTUztbzzbrxaUq6zttbaObaOa5TOa5NOWWa5TT5-N50V7WWbaUbbtaOX-N-7-1-170cTT5ObaOa5OtttttbaOa5N5-1510c5V--0VVcX-1-V51-N7X-WWV55N55550ta6aNNOa5Oa5OaOaOtbaOaOaOaNOa55NNOV50a5-T50WWV-N--7nBf9mcmgcmmmeBgmee7X17eWba11X7VX7X79X97Jc7V7-V7117X7cV7---V1-X7X97--7X111111711-VX77V7-UMMMSMSrN0V5-UKKCMxpprSSSrMSSKprxrSSSMKKSKrMrrSrMKpprSrKrSSCKKppKpoxMUOzaTOzyUaTUttWtzbbyOts-OyUbbztVObyNNOyTV-0WxWWaNNN7X7VXceXXX17-7WWIBnIBonBd9eAA9Vc7NNV1CIK9117-797X7VX1111WbWy0xUzprSSSpprUxrSxxrzTUbqP6zrSKprxzxzzTUUUztzztxzzbtzSSUSMSzprSrrtzJmmfrSrSUSzaTN756xKxCSSIKMMKKpSKpMKprKprMKpSKpprMMMMMKrJxSSrSaNNOtVN6s---0WV17N-V-0aUWbyN0baOaOaNNOWbyOsN70btaUL0xLT6o-UM6lX6brSppSSSUUSrppEF6pSSSMKKCKVUMUL0tba-USSUKSKSSMKrMKpKSKKCKpIKIM6rSSpxMSppKSMKSSSpSrSxrUSlwT777VV---777X7XX19XXX--7V1Hc1--N0VN570c6bzKMUzrSxprK6xMxxrpCKS5NTT6cN0zltaTOa--57-11-V7X7VcX7c7X77977VN-Oa0aTObaUUoOxpKpqP70btyOwUsOw776rS6twUkUOtWaObX6ta0bVcOcWy5N-5T96XWaWccZeWWtaX97cecWzUxxq1X7cVX77VX999750a6VOttw1XecXnIBe9-VZceX7V0zTT-OtWWbrzSpCCUJltWbbbzxzUpoxopxTUUxprS9zMMSKKxGtaUtzV177177cX7X7X997-OtWaNX150a6V6rxUxtbaOV-NN0WV-75-0V77777X711-1X195XccccXZe_on9c29c799ecVOWaN-55NP-T-TUzzzzlzzzsUzxzzrxAqUyUzuA9770V-5UzbzOzSSUrOVOac7WzzxCrSUMJgpIJrKIHgrSJxSrMSrSrSrrSrSrSrrSrSrU55-X77TOe775OxsXX7X15WzMcXccX-Xee77-VX-UzkOzSq7UbzzxzSX5OVNUbaTP6xzrzccccce1XXeccWzzsP7ce-U6rSzSzbzUxxxzxzUwUqXcPVTT99XXce9eeXzS9cXXX9XceXe9e9ce9cece9e9ececeeeeeceexxxxrHee7ece7Ue9omeeXeeeeeeeccX999e9eeXgef9eeXXXeceec5eXefC9eWcPn9WeXeeef9hzSxHcfx9cBe9emee9X_Sp9e9Xe999XWyce7X9ceeeeXerp9eeeceecVeeeeen97d9ec_BemgeemVTOyTNUbttXVe9cce9eeef9e1ee95eeec--3mJ3-01RcfV-NIoOUF8R8uLgf9hIHeec1Xe9fBeh9mfEzzyUrHenxyUyUtzyUxzzbyTTNf9e0a0cWEvKdK_KKKLKOK_aJaPPOOUeKdUddLTyEukyvizjzzzGK43G3322EBkwBzkwwzwzwzwznwoKKJ0K1X2ABrpzzozzzaUWtacme9hxBcXBoeV9--7KZ5R0K1i5QpxUxzUyUzbxztyX9e9oe7eAHXe9eV--KycF0gAC-Bf9rUzta7c-54dtbV-61qbAAy---LztF1oAWqEUzrzxzbeXeecf9V-94pL6xF--Agu7--4xl31226aIBogfABfBf9nxxMyUztttttzbbzbyUtzbsX9f9e99eeec--5HLZ-A28MQry9f055LVqKKPKOaOddaKaKOOd_bizvy_MeOOOK_LPPK42BnJFzszEo0G4aLKOUjuOLO__GKKKKJHKG32K_KOKbnzzdKOLOeOO_-EoJG5KK_KKKGK2wzElGLK4K44JGJKLLLKFnLLOJF23dLLLK43_OK_KOOKFqKOKeK4KG43KKGGGOKKGKKJKKKKG0OKF_FOK_OKKKPLJK_KLK____LKOKKOLLMjidbzzdPPKOKJOG2pOKOKLLKOUu_PUzzzzYwzwydKdaOOKKOOKKLKaOK_OO__aEeOLTdzzEBydaaKdbEnzjfBnuzdPLLO_OLLOK_OLLLUzEnnEnzEnwwnz42zuRzEwwwwznK2nnwzEnEEEnnwzEzvdKKOLO_OOdOUEnwznnzYwnkEEzyEiuUvjzzzvjnyaTyuiz02yyawBkyeQeeOueddaUibuPJi__9gwnyaOOPTvuPJTbeLzEiYuEiaQEeRydiddddaJ-x4K4deadddaa_daaOdaOaOddePaPOaauddeufEeaLiuOfevduazjuzfvieeeuPueefiviiebe_3KvfjfEfiveePivjfiuiE-FGJ--3--4-FFF-FF33F-B-22vjyjeauefeiiuzefujidavuyuivfiuuvfeeuePaPiuvvjiiyyzyivvvvvyziyvzjzEnnEvyviviuvivjjzvjyyzwEii_viuviuo-2vjffdKHPdivgEijjieEigzjvfYyfno3-z2BzvvjeOiivffdideeeieOdeLKbeLuOOOOedaeOeidjgnueaaLOaafeveLyyvivffiiuuiiiiiiiivevfiiieiiviviyyvvvvvvvjiuvvjefeueieieeeddveTefeaieeeeQePevedeffeuieeuaeeeaeee_fiffiieeQeffideufj3323FwEjdyuMeuaveTuQeuLEeudG33_eLVzizvdjfzi_JibeJF44fzeeu2vc3BEfdvdjfy_vvfyEvd_TyfyeTgyY2yzFF-wz2zJGF3F-kz-F22Bn-0GKG43F-2BwzFk3-BoFC4300-EyzjzBo3-l0-zzzwzwzEBk2B-440-04443-EivzjjvzzwwkkBn2-B322BB-zyadY2-B2-nBkk-oF0-o-o2wBnnBnnEsnE2Ezsnvzk2nn32-nB-kk--BBl-2-23-3-BF-B-ysn2-kBBnEBBkn22-B--00-00GKK43GG03JG43KKOGJ_444OOFddF23BJHJGGGJJKOddG-kBKHJ44G-nB-K3-F3-F403JG3GJK45KGdGK8J3G44-3G04J3_LK2B23JK8G3FExKOLK__KGG4KOKG-3K4OHLK_affedaK-G-n2-F-wn3_aO___KaPJ4aOeadaOaLdG3G3GGK5O_OOOGGJFG3FFFF-k-22--n--GJ2K4KK_KKG_KF2n2-2-C-nu22-2-nBn-KKKOK_OPaeOdd_eOK0O_KOLJG44J33-FFF3-F-2-B-B-k2E202--n-wnE2yEEEB2ynkygEfynEvijz2y2GJ2zgzEgwygwyzvyigwwziiiveaaidfuuevfiE22-k-0---F----knBnBnnnnBnBwzBnnEwx-EsnGJEnkCJBBBFkB22nyaLdfeaBknB-EsnBnB-zznzKK2nzznEzx03BknBnBwznByEwzBnzBynnzjzdLJ_OL_aOigwnnBnyEnzEEnlGOJK4FpF-FnBOJGFzywnwkoJKOK_OK____aOJBEBwnEEEwwknwzzzzzzzzzzzEBwnnwzEswwwk-nC3LK2BLKK2wznJK4JK23J4-FzYsCG2lFoJEC332JCaOT_aLPJ8_OOJ34JBFnFwBEK4JF3G48K_4_44HLLPdaPaeOOaLLQiuudeOdaLOOOOOLKOeePPduOaOdGOdGJB3G2FFnBB-nB4K4_GG44GJC3GJK4KOKFwB-kG_F2BknBnnBwnEBzBwwnzwzC3EzwnEjzEEEEE4KK0-zjizwwwwFzzvih-yC02yijEnnnwkF2Ez2CJGGKKdeOKaO_Gbd___Fo-nEB48O_aOG2k2pK3EBzF2042wwwnzznnEEnlK_4F--Bnu7-D5P0Mj4-NFneHn99fHdEpA9e1mrUrMMy6rbyObacVUbsXc-95VQqU-0RC72gfrLTUX9WL7PGHOKOLKaLLO_aOzjzdKK8fyy2yvzzzzjnvEyszn-yvuyji_KjEzfvvdedLOOK_au_K_8KK4O_Oavznwzj2vYyiizdQjjyvjvzjnFJ43FEvyyvysEV2vkG-oJJ-J2vC2nzfvdvcyvB2EgwkznoHKJEKF44K444Fwkzjx4JEwoLK2EGKJ34KOGFCFK2C3GKKKLujnzuK_aK4K2Bl0KK_K__OOd_id_032E-wwwznKK-5koy5rxzzye9XeV0NQGfQzp409Fr2emf9gemeoemhxzoeenrzzzzzzxoeeeeHeeemnrUzzJr6zzzzbyUztttzIzrzrtzaP5Uxy1XXc7TOVNOcXemnCBoeVOX9IHeX9ec9V-7QyMR-O2VLYCrzOcTXeV-7R7oR-42W7vEc-16Tkb---xZJV2sUexOjjEzzlK4KJ--2yzH--10C8--0-gFV-7VNER-038rYV-7WePR--3FiX-8X7VOizvlGJF--GAnc-q7b4qavzwz43KJ--3In9--193W--G5YBk--7uzo-03SVI---Z6nF-JH3JgtV1NZFfOiznCGJ-03ZUnV-NZy-Ok--HUC7-18Epr--G9ncs--8SB3-23innD--1O-0-6lCPTmmnCzzbWa9c--8glJ--3qO1-3XRYCbzK-XlIJjmegemef9efDUzwUzx9fHfBfxyTTTUpsTUxzWttf9eeWtzu7-19Vk6-2lJH2nUze9VKcf22OuK5ObzzuOLKUzviaKzzzfzvwwzEwwwzYBzB0GF5JGaKOJOG__3a_OJBG4-PlNXPmfBnBnBofADUzJzbbbbbzpxzbXe0ccX9Bc6s--1mmx-6lYOwmextzUrP7cc-5BSZbV-45HC2T7-9BdhMxF6JOkqwemmmmf9e19nJemmmenzryUyTTUyUbbbbzbtzue7-qBstqKOOYvEEBo-45TmAqV-1Bzxq-CGcDCxzS9dEMrxowOX7V19X-6YINKaOgnk--leh3lV-cqZnQo-AGhLznASpxpObxa-cXcXV--sj9F--RjYc-9DO8aRk-JRodC5V1Ntt6OKvznCJ--6Flm--Yf48k-BTXJhc-LEJ7aTYC-0BTkwjJhyP7P1LYtQd_KPPLbePLnuafp-yEeddzzEuOiydeKOGdzeaK_jzjjuKKaOaOUEnynBzvnzVyzzEE4FnBwBGGOJBF334G0-3JKJEknBBlKKK-wnCF-RUIqgju-4Yv7daLnB--6voH-EYxyt_ueaYBBE24F-wUjugoqOWc09F4K5OGOOYyzBzElK-1m02NnLNP--32h4-0m0qgnqV-1FPCq--H2Gus--FRXJ--7Gue--38td-6H3zimfGzxLPWaX--3E7C--16gBV2O3CZOuLecn-n3--RX7jgyP--3G5C--18RXV3t3nbP_3_iju_Hz2-B-03XWAgfxyTcV-047KF--Xjy7--GPHJ0W7iC6CSKKIICJnCBemzqUbV6sUa5PX6w1711-V0d4t8OOwwo--7o-P-3ZP3pin4--1CVBV-85mEN0d7rPv9hEIBeXrICxpCAIBtxrtbttztWV--UWc7ec--ZRVOk-3Y_fi--3SWl-1HE1urq7V-06YZF0JYnKBgltzy9c-1GuEq--1Ey3V-87P_R--8B0X--3aep-1HIL9xw7V-08jeF1RZt2BoxCKLV5NOaTeV-LHXk5OUn-3B_KjRnEJxK6xSIBnGsOV5-5-N7e0PZfppdQivevivviuviuvfffiviiiuuivV2vxJG3G400-F2zoG43G3G3G43G3043FJF-B_XHC--1HrHb--1Ml9V0OBPSTykK--mPGuw--0CdCF-3bQrg--_-bGk--c3w7-1J1Tb-nHWSNmnBmnCBnBognAxAACOzzzUbzOzIAAEbaOtbpICxtaNHW9WWttge-Ou9dHce0uXWaOaNTc0qJ_j5Tfuiyfuvyn-43-C4GJJF-ZdZ-CEN--qKF5MivvzoGGJJ--9fZm--4NVG0OHj5Imgmgn9mggggggzbxlyUttxUxrltzzxUp9mcegf9nBx9HzICBnICCIKMbaOWa0c55OWaUlaOaUxxrIJogmqTUpK6aNNOaN0xMUNT1-XXceee7cN575ec0cecV-0P9QF-3hh-D-7_jKnaJ2nyZ-YA_nYBnBnEUttXVOc8aMCmTLLKaaLKPddbjiuievivijivfivy_PPeaeffjyyvjjvzEnzso3-F-3G42l4J-2zvEBGG00LLuJF-3KFK003GFEyxG-nEzvp-B33G_JK--muI9w-5OSJStaOeji--wBzzzKGOK-0JieNwmeCzzaV-TMQgDzvlJJ-GAk2vrxkPe7--MV8o-6At0AC5--OURXy--gjqMEraeV2OUrqueTfVFl22F--jvyN-PNAgydcnF-Yn1WRrSpppMJeYrJnrUKq6ce7WzTUzUUUNVNUtsX7VJece9XXX97c--5440-2I2OHnJsOV-1NxR5-Bn6z2mgeegenBzbzzUbtsN--0_72F--nKlc11OxXDLKKO_OKLQvzwwwzEnnnnKF0RnydBghMMNN--dOfypPMdfibveueeaPaOO_3eafd_J8KOKKaaOaLuLaLvcyEieQevy2l---GFpJFzz-ynwwzzyeiyv-Bx3FEjjzVEvV2s2ufk2G0--3FF2020003JG33F-dC_NYAASKopSbtV--77--QufZ--CxYX-5b-NCbjY3F--sGR7-DRSQ6v4--2ZTFV-OmFuQF--tWp7--Rrk3-2DRQfF-ObG_p_LKK4LQjvvvvjk3BB--2cnkV-0opdF-BuUUE--1SP5b--2fOPV-0qQ8F-JvLKBlV-ttYkOgB--EKfm-GbimObjzjzzK4JOJJ-QEW629fAEU6aT5-Kbx48aOGeQiv-nzVk1K--4-Bei-2c4b_aEF-00fX7--VsoZ--FYHH--7bwK--3KeVV-19ymF-456Wg-0cmm4s--oPB-o--PCDOOk-46F9i--7vjd--oSsBlV-uEMIQY3-0GwSv--1EeMF-06tTc-5Z2ZLk-2HUyYu-0dG4tY--3dhcV-1KhfF-09wIc0ea0y5OddePfiivc-kk---0--hB85hIq---PPqqQ-ACDhYBegf9nBoyOyOtzzxAUzUxrxzxKrqUSHnEyUzzOzbcXXe5e9X97XXXccX9Xee--1UpAF-SFcxhOX-1eB0xgo--Jd31--9KJS-9pBVymefBnKMUUaOVNN72Xdb-LMveiuLKJKMinzzzvfY2BzjEzzY3GK3FK4KOGKF-0Ji17-ueZcLLyvwzYGGK-0KK8igpzza9cc4aecw5eQeefeK3iifeyVyyaPysnzivW-yvivjf3G32JdFG5OJG-3--EB2003-C_GGF-0M4Pc--fYVJ-0L1VIV-1kjSF-0NOQ7--gXeJ--LIdm--AAXh--Kaimk--h2YJ--LYMm--fHOlV-4QMoB-1fQzGbV-OM1DQUKrSV17XV-PsGvQ--0R8xc-Pi9hLee----4n7gV0uuK8Ovwo_F-0SPF7-Tihf5jioG3-rMLqIMSxJfMpp51-Uk7-X7mV-1vH3F-0SiM7--ivJJ-4MU-YL--5j0_5V--MW4m-Ffnz4uebcnu-E0K3--4umFV-1xQQF0KULdhJnCaOX--5ji96o-jMt7YCKBproNN55-KC9-7-Pjp4LPbw---4zuVV-2-p7F-4VdEB-3g5r8awo-6q3GTnIBnBlaOaOV--kXLJ-0NJ5IV7f1wFOePedueiffjEBwB-FFFFFG0F7pWV6CJfCAHcXBnHgpIN5Ox6lbxrJpMSxbpNN7V56rMF5-7-X577V--lo2Z-0O25AV-28oRFJ__7yBm_ICCAEJgcnBdJonCBgegnJpS9XXe7nIKCSSKpxppCpKUrbzKOzaUUoUzKLOttxGVV557-OWtbVWV0a6ryX7X70cX1-cUu-Uy90zaPcXe90XX--AA8ER--Oap9--gnQdkH4b2ThSprSrUSrMSSUSxpMKpUSprMKrMKSpprUMMSrrSrSR6rbr--N--0X71d9-VV7e7WaWu1Zc-cVe95BcZe7917X7cXV7VX9eeX9--Bw-4--LXIak-9oUkasF-KdZHh5--QKOSQF-0f7Ac-DpZnLQC--5ifVV-2M_TF2_g-RhCKoxKSR7-6xX7OVh9-77uqCsLOaOKKK4K45PKaadudaaeddaejyeedeTsz--o-k0-nzuafiueskznG3FB3FG3EBnknEs4_OOGa_K03F-BBzvnywzvvzEBBkk-EQ93ASrF17--hcV8V-0ho3c-1r18a-KLsKtn9ghIKopJxGbzlz5PcOWWV6bZeVXV-erChLbuawo3F-0QgRIV0AS_oTz4F-0iqsc-LrVEayh0F-0jBw7-1raaM0sqwtimmmocCrUzKrUzbxJeYBexrSIoT50xMUUSrzrrxxxrppMMIrI9gnJzzaUOzSrSUUzxtbX7OsU-UOzrUxxSSSpxSrzxzrr57cWue-BcVX-X7X10bqN7e7ce7-7cX7eX7ecccXce9e9997eBhHmhBnBme7791-5119cXV-ATZeR--Qs0X--CxF4-2M-EHrMNVV-1s18b-0M09Rrc-3i33Gcy3-7r1pBmhExpSrcP9-7-3i6ThbzJ-0r2kLmxV-LsT9bywKF-Cl8ajc-5sg76o--RNyP--DBcS--r75Dw--AZP8N-CRYLYIrWcV-AZ_gR-hRb0Q9efBUUzzxrq7Ve9--DIcG--69X3V-2_KXF0CmrNBxUTN7e--DM2x--MBNss1qtbGTeeeiebfeviufifjG-FF-FK-2F-F0-F--6CEoV-2b0EF-pnx7hKlVX--DWBO-IrGX5pJgomd9Beefrr6rUttyNUsWaN9c-iuOLLLPjcnF2--0p_uc--uwAJ-ISZnnCIKWa---QgbdT-0_qJ7CprKy7917--Do60-0MPdwpc0LirO4eLzjezyyzzzyyzjzjzzzvvsFEiyn3OJFKKJFEwwKOKJJKGd_GKKG3JK4KJ-ESx2nSrP79-5j2XKaPVn--_t4Cgjtc-1wYGa--6ZPXV-Ama9N-CTK4nUSXX--2n3-F24thzhrHcXnIqUttxbcd97-3jCxpvh0-1rbiZpEa1-JjETd_azzgznzC_KK4F-0TTz2V-2nrwF-Ctvzgs-Dwy-LEp--Mcags11x3uLKKLPLLLOeNwzBknnwwzECF-0uAGc-ax4e5iii30---6dYeV-2pDWF-0v0pc-uxhu5KvzivnG3GF-0vS9c-Tximavyl4F0GTtRbKpKKKIMKorSKxcP77--50cV1--X-0jSM8x--MlFHs-PyMyriv3J--6njmV-AuIRR--UKqu7wjf1GaaeOdiaPdeeaeadePOdd_OGG3FK43G443G3G-nBB-En2B3P_3HKJKGJJHPdOKJO_aOeOaaQe_K4_F3G3O_8PKOeLOPeOK9TddJ01OaPPu_aOdaO__OKKaK___GOOOaLLLOd_-9PPeaPPefeueOH_Afeeeueuaeaieeeaadd_OdvvivzynwnnwnEnzzzzzznBnBzEEEEzznwzEnwzzzzvizyzuuaveuePv-wnBwwnBnEePaOaPaOLEwBknueaaMwzeeePPujjczvyvwnnnEuuusEnnEEEEzznEBBBkn2BnE2BknknBnBwwn2Bn2B2BBBkkn2--3Bk-k-F3F3J0F-BK8J-0-3Fl43J0JJFC0220-FFB--434_F02-3-FoF-3--ULK1-9jk6__KPzsnC-0rs2uxu7-5z6oLo-0Ua7Y--2yTuFFpzEegnKCAHYSIEIBgmnBen9mhJonKKpKpKIICCBopKMKpCMMMSxxtbbyOVNN50V550VN50VN50WVN-0a--0xLN-V--711-V0R4w-PfBJ-5sCnMpUSzGcVcX--36DPF-a3T2CpX7-21Rkb--7L9iV-3CdyF-D7K1E--E3yyLPB-AsdryprMSrUMUXVXX77X7-0lNuCb-0sh-cpsV-24z4a-0O5skoP--HJcO--8cjcVMwvW_PePffuOedddaOd_OLivedaLOQswwnnBwnnBBEEz2EknBl___JJF2-ddFJBB-kFJF-3Oxo3mryUe9--oNo0k-L_0tBtV-x9UXPVk0Kd_2QCCKJnKMU6Wy6x0a5OtWWaA9f9eX9VNhBeeOaOaK_aOaOOOOOOOLK___aLLLL_aLbzjjjEnnnEEBnEBnBwwzEzFnBzBnnnBwkBOJ3--9Q2JV0hFDWPTj03-0esaIV-4M3pF-DfxqCV-0LPM3-8fbYnBy5-Cq8_WadYzEwLK3--A59FV-CZXbR-2ghDYk--LQk_-0vCsPnTV-0OncZ--gxEe--LXbt-4QGLNnIMaTP9V-4d4NF0DoYGBxBttWe--LdTx--AJjgV-4fDgF-1q1n72bQ0Tq_fzyaLyy__JbzjyiyEvnzoEzz4K44GG440J0GJ--AQaoV-hj4xQW--QUtTs-0QzBZ-2hzuIu--M0W0-3QVpXzUSX9X--r954k-6-LVD--s6udk-U12pBUe--NKbO--B9nkV-55gUGAILAU-ee9eeXeeXeee9eeXeyN9eeeee9XAzbzzzUUtzxzrza1fzrzs7Xe9XmeeiUzrWztzbzzsUztbyUUrztzUzzyUVfzMzzzzzzzzzzyUzzzy1SzSxzrzVczzSpUzbrzzztzzzzrzzy1cXXecXe9zzxzV9eeee99USzzzztzSzzzzzzzzzzWtzMUbUztUSzzzrzzsD2xzxrzbxrzbVeXUzMMzbztzztyUWVX7cX7X7ccX8rtVX2Vc1gVWrVNOta1UbbaT6byOyTMqXggpFemnBnLpThScXXopfJppUhSzt_USUrxSxSzUUKwepzznMzUwefMzSCJXAKRemgegeeoeeeeeeXe99eACMxzUrxzUzzzPmeceeeeXeepzrzzzr9eee9e9ehUrxzrzryUzzzxwg-3sRUlgzK-1wGfBrUXc-1s_20ck-8lARQMsc-6sakWaUYsG--BJEyXtygSR0KGMwzkKK_KK_KJKK4JRnEEEEzEnwznzwzwzzzwzzwzjw3wkznnnkKOKGnEzwEEwzB0wn2vyizz0nEEqPvnzzzwjjEjzEEwznzzEzzwnvz2jjvvzwnkTzzzj2vznzvzyzzyzzwzzwzzwzwzzzEnwnknzfjvuzECfjDzEBBwzEwzEwzwzzE2vfwzk6njvw-nzEEzEzyzvjvLizyyzzzyzzzzzvzzzzzeOPPKd_4aPuwnaLK_aOezjEwznnn2EEnn2wzzEmwznzEn2nwwzznwwnywwzzvzEznwwnDPzzwzzzzvzEvznzjEyjEEnnwzzzzvzvzywviwzzEBwzwzzveznyuzjEzzzwznzjwzjwwztfvzznEEEnzzzzzwn2BwuO_fizzvzzjzjDywzjjEqKfyvzEOfzzyLjzmzzn2hPjjAwzjvjezvnfzzzjAzfjjqKOO___OL_KKKOK_LKLO_KKaKKOaOOLOO_ePLiKKKLKKLKKLOOKa--wN-ww--DBg5N-4latIyc-MYUfaRyCF066q1CJxa5X--5F6mF7z9BugfEUSrSArzxBefBeJcrrzbtzUzHmfUzzzttVX7X7XXX7XXX9--yKGGTsF-2mkw2k-3tQstjx4--BkdsV0DNK7PzGF-6B9ki-9tXkO_K_zznl-0RovXrc--OeZW-IRqTXoeXefUzzzxHYUyWzzzu9XZmZe7-1tmAWzJ-0nbeYV0DRxYTvG--2Dto7-0bYlJ-0nm6v-4DTdBTzyzvzvlJKJK4K-8wxJTrrrzrzOceXce9V-DTg9R-dnsbYExxryUzaeeceec-6bz2Lk-2o5Gnu-1u2YOv3-0oCyAV-iaLAUp--CCXRV2Db2oOOwzvnpKF-ppYW0bVVaOyUzzzrxpxpzPk-2eBMb-8xGoerUUxzry9Xce9XV2ydQ2OK_OjjnBwnJ--pC19-2uliNEyk"
+		},
+		{
+			name: "Caucasia", ...colorConf3,
+			data: "JJAf2uP6y-0nEiiuyywnyueuTbfevfvvjivivivjfvivviyvuuyEgzjjzzvviyvizvviuNziyvijvijfvyvgzvvvvfeu0-F-n5a_GG4KJGGG3G3G3FFJFmKGJ4JGGGG3GJJFJG3G3G323G--kLPeduaKGFGGGG443JJJJJJG--B-C0FJK__443-BJ-66wmpBnJopCMJpCCCIIIJoopKKICKCBnCKJgooopMIDOzzSzUzbzzUSyTUxxrrrrrP1XcXXX9Hcn9cceemece7cPIoeX0sWWaOWVNTOcTNNcN0V0V5-N0aOa-0V--N50a5Obyc-M0z3TPOdgBnBF0NOpxpMV7-M2mMiLbinz03F0sTx8mfrNT-2l6QEdMwwp-5XX7UMTP1V1GIuvaNn-5Xfxrpw5XV1GNTEfn4-_XvzjAAA9mfA9ed9fpzyTUzyUaUyOX3n59NTKLLKHPPPO_LK4iidea_O_QeideeaLOLLJG3-0eeddOaPO_OKLKzEznzjgnnzBykknByEYnByug-3332ElJ222-2wBko2BnBnBwwzwx-9Y6j6rrrkccc-E5ctEizpJF-aDYgSMGz-X10G6VyjiyuuPeiuzjivh3G3K3G--k-9JGFAPEIZSKBghKSMIpKpCJnI9gcXeccehHccoeXBeoppKIJoghIHnCJnJmemmecmfA9jyTUzzzbbxbV0WaTT-OtWWWV0zxtyUN6yUzSxrSqTUztaN71190V7-5V15VUy--V-lxHEg--33oL-67Dhyu0--3FoL--7ahw-LGYowfzu-0HFMIfF-aHWWwxxxcXX-E8ZrUdfVl--TIJLzSr17V0wcDLvivjysGK3G4XaJb1zppIJpBccccge7fUxx9eocX7cXX6y7Y99Heggen9nJdAHp9Xnp9IIJfICIBdCKKIIMMJme19eXxxp9X9VVfEMMMSBpooe7XCSBomccxxpHcrKKCMHmXXmcxoeX1mpJe70BrMJmVV--gxExIpJcX71nKCJmhCKKCIJoopCKKKHX8KHd9nKrKBj6xrSrKpz6xSMMSrKppwObaP-UzSCAICIKCIKKKCMMKKCpCMMSrrrKpKprUSprMUSMrSprKrSpSrUrUSxpxprSrMrMprSSSppMKprSprrSrxKSUSqUGbqUbbrxrSxrSrKHXXeggeYBnBgmnBnKCrJnKpIKpBnKCMMrSS9chKKIBeX77EIAE5OxIIKKKIIEKSKSKKSKKMKpKpKKSMSSSSrSzxxxzlzzUzzzzzUxrMMMMSxxxrrxrrxxxxzUzOzrbxzrxzzzw6w6yOtttttyUbbyTTTTTTTTTUtzIrzbzbzbba-71-VVV77V--7711-V1-1---51--1-1-V0cN-N5VN1e-ee7-1mc71Xe9fIBcVV0WbyOzxX-VV7VNN5TUzUu1ce9menBecmf9gxHc7c7V-777---50VP-V-N-0WxppSJpr6zyObzttV6rMKpUyObttbryUbzWaP0sNNOX757X97X7ce9XXXXXVc7-V-X7VX5-V7eeA9menA9fBnCBnIIJoorMIRObpIKMJpppSSSMSoeX71-V7777X97c5V-ccWV0VX77--NN55-N--7U5111cXXenBcc7fABgcX117X7c-gf9emV---1--XXXVX7X17579VVV117Xed9XecXX--WV5Uzz6zyUzrSrUUaNUlxtzXXXee1777X1e-5NOy--WV5OttttaTUzyUrxxtzzzlzMUrzzxaUttbbxWzxpSonBmpCCJpCKCIJpJooeACHpprSxaOV577U6sOWV-NNN70WVOWzwTTT5NUxryUba5NNOba1cc79cXX199X-91X99mhIHfJmXgxxxpHe9XccX997c7X0zV--V-N7P6k49V711-111X-77cX79mmeHeccV1mdbn_Uno-DKNVSo1-O9kaiKKzzEzpK-8_SLEzzzeeeV1Hinzjh3-8_UsM9mjtyTVBHk8AfiyvivizpG43G3GG--0OIzV2mnjMaLEBxn29mc4SSpprSSSUprrKprSSpppKMMSrMrxrKIKHhKHfIKKpIBpCIIJpIJnIKpSKJo1AKKpppxprSprpMKphIKhMUSrCKMRpMKrrSMMMMSKUVUxxUxSJe19efAKKUbKnMxKKUKIKUStaSrUMTUrzbzxxrSzzUy5SSKtbqprTprzSxxSrBXe9ghSrMMUyUzzbySKrUKpUSpSUMtV---D--0aN-X9997977VVe9XD-19XX1-9XcXXXXYxzUttzbV-7VX78by0rUSppKMbs5-V77V77X-X71--17-X-7V-0WWVN-6byTOrJepKpSrpxrUSSIKSKSzrrrs797c1711ObUSxxpSSSSSSy5--7997VV6z_rrSrxpSprs-7VX17XeXVXN-11-TUUSxztyTT5ObzrSSrzbtbbtUKzrxrSxzUrzUzShKhMKrxzzzxyMtzqnAA9mgfAAACKICBnKzbbWWbaOtbaOaTUbtyUyTTTOaOa556zyMxrUtaTUzrxrrrzSzxzbta5N0s-ee997cX97cX7cX7X771-V-aT--V17V7X1--V7Xea6ty5T5Mts5--5-550aT55NU_ySxxta5OVD--0VN5NND-N--8a6a5OsN1og55OVVOta-75OTSqhCMrBmhMbbtzzzzta--NN5-8Us0V-N1eD-XN0VOKppraT18zs0SyOUaOa5OaN1-VcX7X5OSpSxpMSra5NNObV5-N19cVc-W_KMSrrxxztzsND--MJpKMrzb_pyTMzUa5-0a5-X-VOIMMMSBnKKSMrMzprzaQBen1ceeXcccempprtzUUSv9mmfMrxzUMxpUUUrzbztrxyOzUxrrMzbWbJppSvC7gmenA9mgggfABgnBf9nBppUrttbzUzCKrSSxzbaUxPfMSKpKnJhRpIAIIKrSzUMMzxztyTObaTOWWaTTTUbzzrza5ObaTOWbbbUrSrStzyUUzbyN--s5T2rs-1XeXeefBn97VfBnIBemf97cXcX7bWV1111c1eiN7f-ABa6s19n77X7g97cceX7f11UzUppry-N0MMAIKzV4UW_rJoppza55-TMSsNObztaOa6KzV-77N-SKKSUzbaOaOyUtzzzyTUbtzxrsOaObtttSraOWaObzzzzz_ptaUbyMzzyUtbVUyUrUzzzzzUzzxyQMzzUzzzeeeeXee9Xeee9eeeefKMIKcf9ggnABemefCCKzrLf99X1fABgeeXAKSSMKxxzUSrSraMRpSxrQA7X7X9oopBo1N9gnIKCIJmmmnKIKJomn7emfMBc51997cenKMUzPmegmfMMSzzyNA9OzzUUIKMUKrKpSSrUrxza6SrMSrrMSrUUxzrxxxrUSSzSSxSUSxSrSSrSrpUrMMUSprrUUUUSpKrySzSrxzzxpzSppprrzUrSpSSCSRprSMKKpMKrMKKCIIIBohIBonAAABnABmgemhBmmmeenBnA9X9ecceeXX7Xemmcemgef9nA7en9kecee9eXeX1-enBkeX7XeXce92VXX99ceACBn9XX77XVVV--X7XemmgeeXXX997VVc75OVeX9hAAA7eeme9eXe9Xeeee9e9ceemmmmf9meegfHenBmfBnA9mgggemnBggfBnIHmmekeeceX9e9cXXXmoeceeXce9Xce99eXnBpCBpSrSrSrMSxzzxyeeeeemkeemgf9pprUzUHmeXXem99e9eceef1dbs17ecepKrMgg9XeXccX-Xeen7cXeenBmnBghCBgnBACCCMCKJohCCMrzzzyUzzzzqognBmnCKprMSMACKpz_wmoogepCKrMSMStUZkeeeeAH15-11-X9hCKMSRomcgpKzprpprs0z_rKppzrSrzSpIKIBgXmprrUKIKKrttpKzSUBomm97ghJpSyUzSzzzUbzzUtrzfAI9epnHceceemegghUUzxzWbzzrbTopMSta5OVOrzzUSKUUxrsOrpxQCSrIIKSxSrSzSrzUrUUtttztUtbzxxMaOV-sOWV5--NNOUzUzxzxzUUrSxrrUSrrSzrrSxSprSppprSpxrrrUUrbbtzrbbrztzzrbbyTT6bSyOa0aTOaOy5T6aTOzbzpxxxxpzUSxs7XESrKyOUrtaOa17zyUaTOaOSxprKCKgnIAAABnBnKppppppJnHnCMJnCCKMSrSSKKICCKKKKppKo-2AYFDB--MPns--j8uk-0TwQV7mzO6ievyyvFGK3F--qNX0zxzxrXce9c-3mKUw-DOJuzw9-lBkNyuuuviyzjJK43G000-OaPJEprzSKMrrkccc-1997-2C8pDo-uPOqwf9mnbbtyTV-2Jzv--5gXT-CCmSUvvGG--5xsy-0D-rE-4b-qzSqX7--sMmk-0lNEV-IZ0nk-tm6EnFN-Rt3BvgF-5ReOUc-otNAvisG30DRoZzUzzzrwP9eeecc-3uJps0eSSKRrMGzrzrrM-V-eXXeX--2fpn--6MiT-0DoXD--6ULD--E2lg--TGhs--wrkk-0uNAV-npyzx-0bkCEF-6EeL6jG-5bpJQAEbaV0nuubvp-0dya3mhrk--BzMKzF28zMOzrMUP779c-gziXufkG-2byBQrcV-J-IhV490elopIKKJzlX70V---2FCPyV-HVlaxpX7-x0_hzvvGGF-12_CV1o6LCaeB---Vy4s-K15tuR-0cH3EP-AFalyPf--1u44Wxxxr17cc-CFkqTusBG-2cO5jMcV3oE3YuuiB3FF0P7tWrre9-4GLRUh--19rRV-JN8nk-1B7iV-3OQA--cpNzV8oQxrjjizyyw4KKG44-1d-ezGV-_77wzvGF0eJQZmxL0V-C9jlvF09OI0rTX--JoI0k-PTDyyV-40oK--e5AbV7K29M_OLMfgznEB4-IfrEMASpSUSq-7-Nee-ANaSDyx3F0A69npL--1qoP6bvVF-qtlNxCKCUa0V7V0xqOguudaNznk-G3-Lvq2RrOc-2N7SOfvlG-2g3LFmnKUrla-7X--Vg031A1AJgoxMSporMSSr-XV--10aNXeV-y7CVQfz0GF0RIcNptae02XdsiLTezvzyyyzjzGGGGGGGGG3--GRVT-QXt0TTyyzwK4GJ-r5K0genCxtwT-V-yBnotTvg-F-RR4WyVBNuCtdejvYyi-knBLOFJJF3BSAjnMSzUbsX9XeV3t0vf_fzv-GF0wZ8bxrOe9--8AQA--HN1m-CZlGTLRwx-cmONzIxrprppKprUyUts-XccX1e97cXc--_7pw029QbgoonJUROV5-V-iJrguik4--mdjY-0tQAdaRk-BiCss-aMQLTjJ--3jUaV4tUqAvjzx5KGF-YB7rwfzwOeVuOXlO_O__Kbj2vizuviyuuvfeveTiviynvYziefiiefvfiYvjB-444G3F-0-2-kJ304K3GGG3JG34--F3GJ-IBbGxS--3yOw8PPd_GaaiC-Eueibvyvx-304--C-2IBzcggmeenCMSrwOaOzKHmnrUSxzTOu--V7VVV9c-yPFVPuf0-F0gt0ZpKs17-aTPhOiBFxRy2ZmgnJeeXAICBnBenJzSrKKrrSSrKpMKJnBnCKMSMIKMrxSOV0V0zzUKSpppSKSEKIESOV-Oa0sOzUrMKSppSUMMkP77V-0a1--VP-17--71--7-UxSrrrrSJpqOtzzOX770hBcX7V5--XXV11cc717X7X9XX999777X7e-_chDLLiiivYEl33G3-Vock29fSpSKonCMU5OaNV-NNX7c2DaQYtPjzvjfiywGK33G3G-0xDlzpUyX9V5PSx2jyuzVGGK-0CFZWnwNV1uXF0_fBo1IJJoSSJnACCCKppSxyUV-117-N711-6evlav4-JpSyQKUSSSpaX517c-c-yg6luPzk3F0CNJQpy9-iumBnaLKKeudOKG_KLKLLLueLOaQEEjEjyinEyzejjnskBnwC043F2-nn2zE2EEoKGKFASOdporHX8CBhzxraUqUzSlzSX77eeeXBc0V-LhikvW--KmlL-EfebDLTskk-YMe-RrMTV7V2uyCCaPEBC-5q1sjK6a7V-A2Ih-Aq892rMUNP7cc-TlB1tv--ANsVBjV2v6d6aOwnp-7qIGAIJlaNV1imQQOPszivwzE8GGGGJ0vODuRhCrppCBpULN5N7NX90WX-6gppqPk-GqSXfBnqOxtaUemec-5nnTs-YPD2wz6re9-3QGmz__bnno-2PJQD-KhKnTaaTn-nF-0Pg_N-aphUzj4FKhhRbmhUrKHohIzMpxrpKKKSMKSKxrU5N5OaUL--X11777Hf9VX-N7--5P-XHXe-0hhca-WqtqMCppppSJp6ltz5NVXV-X17eV0QUJbjJ-nREfwnBwOtbae-IiGGaLPvEk0-Er7eI9nCKpUa0V--1v_ZSfcl--0T7Zc0TwsLPNzgz8K4--MdCP-8jMTqMno-QTv6BfDUs-CjSgLdjBG--rknYV0vttlfW-0CxT2mcUV6Qv4daeffkn3J3B-EUOXBja1CjifiOvd_LdKKaaOaK--nBw8aOFFeeKbfivzjix3En-2Ennz-n-3-2UYTi-bkAQ5LLKaRzgwnznGJ-MWJCRr5NV0wBylcwF0D6jaola--BJZx--NfgX-6lRkav3--sx_2V7RUnUaK_aLLQjzzz-atBrI9mgmnICCpCKLTOaOzs0aNOWV9c-E9stskaiM_-pIJnKoxxzxzrUrrxzUxzSrUSzSpISxzxbxzzzzrzzrzxbzrzUta-0YBe7mf9eeV--P9eee7XXcecVXeXceA9eeeXX-c7T9Bee997n9X-0wqC2ylF4iQ5frxSUzJzqNX9cX97V1wr6EuslF-YbY3xSUaeX--x1Jxc--uDnn-6S8wKaPedvn-FFB-zea6RfESrSq7-WX-6pPVqNx-dun9rIIKMSrSrSxxBzbts7XeX97XX7N---2MXGF3ilDMnrSppGa50VeXcHjS0jOLKO_LOaK_K_K_LKK_JKK4K4KGPedaOK44KOPaK_3aefffeTzivizzzyuvkBzwzszEEnwnn-nzyzwzv03G00-B2EzBEBwzBwnEE2-ow4SEIJmcccxxrUJnBonSrrztzyTOts-9X7VX7X9-YvBN2wwwwzvvjjzzk0zOXTUyUxzV"
+		},
+		{
+			name: "Africa", ...colorConf1,
+			data: "C0DX0NP1V--QqeadnzzjynEEzzjjivdivfezjj2BBwzwnEzzzzzEjnnvYBBBBEBnzz-UV-hflzUUSrrUzSxSxzk0a1-V50K-0pMiudevf-zvfeBnyviVF-F33-yzgp3bVV02IKUrHnUzzpHz5UzUzSKrUrzbyNN-OzzxzUUUSrSrrrtzttzWaOaTUzSxxaOaOxrKBnCSKCIMSKKKKIBpIJoonIJopCJpJpCCCBnBggeXn9eccc9X7geXXn9efHfBnABemcXX9eece7XHXeXecegeeVV1ee9eX9ecc70eXcXe9enA9fAABnBnJpMKpKJnBnHmmeeXX7X7cceXXce9eeccXVVVV-VeXe97Xcee9f9eXeXXXXceWVWBc29cX7V-6aOaTOWWV-1XX17-NOtWaNVnBn97X-7cf9mmnBemXgece9I9eXXomgeh9eX99eeeemf9BmmeHgeeegfBggmnHoeABeggnIBggeeeecVI9eeemeXe7cX1-ZmfIKCCIJooonIIBnAAAA9mmgnIIBnBpKCBnCCCKKKMSKJoonIBohBmnABnCABfA9gd9mhBopCIJonABgmnJopCCKJpBnBnBnCJnCCCJnKBoggpIKCKJ-UMSGxrMMKKIIISrKpSKKKKJopCIIKKKCCCBnIBjSrSSpKppqUI9cpKIKrrrKSzyUpKpMxS5UKxMSrSxxxpSrSKpIrHxrSMSzHfrxxzUUUSxrSrSxxxrSrrSrSrrrrrrUUxryOtttzbttyUzzbtzzUzzxzzUxzrTTTTUbyTTTTTUbbxy0byUtzyUzyUzzzzxzrrSrSSSppSSMrRN-OxpSMztzbzzzVUrLUSpprUtxKbxBfrSKJpKKJonICppKHnKKJoopKISppSrMKrSrrUSSpxxMSxprUSMMSSpKMSttzzI9f9hMMMSrKSMKpprKKHnCSSKpMMSSrKKKKKCIIC9gnJonBpKAKJpJpBpKBnCpMKKCKCKpKSSSrSrMMMMKrMSSMKSSSprMMMpUKppSJpKKKKMKSSppIMIpKKMSKSpKMSSSprMrSrMMSSrKppMMKSSMSSSSSprSMKKSKBmgprSSppSIMzxCUzprMUyTObbyUzzzaOaUzzzUtzzzUUqOaUxy0bzzzbbtaTOaTOaOaObaOa5OWbaOtWaOWa555555NNOWaOaObaOa57-6WV0WWV--O97VWWWaObbbtyTUttyTOaNNNHV0V-N---9-V-777579775-0taTOaOaObyNOa5OaOWbbaTTTTTUztWbbbaOVOWaOa5-5N-7X--V-517T7---7-Wa0V-X7ccX7-7-77VV-5-7-5N17X7XV-0VN5-N5TNNNNN50aN-5Oza5OaOtsOWWaOWaOWaOaOaOaOaObaOaObaTTTOtbaTOtaOaOWaOaOaNOaOWWWaNOa5NNNN5-Oa5NN0WaT550WaNNN--N0aN7--0WcefIBf9en9geecmmf9eAAABgee9egfBgmeee7cX7X777cce5TTT-VVX1cX1c7197X977X7Xe79eX15hHX11717-7-V-V71177VXX7X7ce-V-1-1-----117--cXX77ce1-VVV-0u7X777117771177V771-717VV-977X77VVV-7X-OWxpSSMSrMKMSSrSrSy5150WV0V5OzJpKCKCCUzSrSSSrKrSprMKprpMUMMMpKKSpzSxxrUMSSMKpppSCKKSMISMSrMMUUrrSrUKSSpppMpSSSpxrrSKrSpSMKKJhSMKppKKppSKKSSprxtzaUTObbaObzzzbyUby5OtzrtzWsObbbtzttbtztzaTTUs-o-9SuvkpF---4GN0--Akuevkk-0Z-5DzUUzzUMMSrUUrrxzzV0k24nbEF-72uPs-31lfR-X0zvBgpOsN---Fjh-1VahUR-033plvivC44-bVp12CUzzrxpztzzzy2A979eeXd9eXXVGkPch_OLJKKa_OLujjznwwkzo-Eno-q32WRrMKpkV7-V--7jXk2-IvW9e-7xySpV2kZ-vaazk0-HWAOjKHprsWxta7ccV2FavYivl3F2cIsAppKMwN117X-81g-ifoF-L4N9UrkcVDFfPz___bjvjjEB3ByvEGJKK--WQlvV0kn8QjoF0NPnGrScX-E2V6yPuEF3-D6-ISGX-42b3rh-0NYH_ooy-3P8eEOJFGGIB-B-0-2043LaPdaeeiZ30003G002j-03-JGFGJ-4K-03G-3303330NBzB-UzzB3DvzuzByyfiivieivifevefjzyw-D9vlxqX-A58vaOYw-07nF-rFPV4lbM4aaabBn3B-mC6fBmmjSOa5N-25o35o--CiYN-gQSZPTw0--2QiX--66YJ-9FT6CN-BHQ8jadHQyddcyvG2232-F-8Hr8k--dcfk6dIezn9YpIBhC5Oa6y5UrWZmX70C2JVtUzzp4J-mXEjworrq557e-6IQmyv4--dmmEV-JuCMk-9SVlk3KDxRuPiueObi_JGTyycnBk--4-BF-eicPos02KqRDLPefeTiuiviuk-K33F-----6f9qfBnUWV-jMD3iO_aOaPOiwBnBnn--0evOEn5U5c1_T5ktLKKGTvjzzYp-w0Rg9s6ABmeWBmghJonKxCIKIKKSKWa6zzro5Uxltbe9e5OtVOWaN-N6w6y2ABcX17cXV-SWU2PBo-alHDReopsOa-OOYdiPPPgnE00--BsPu--Oo5J-5oKjx-AxeUxtaeeTeeffeuePauuvivijfieiivePgyvvC000000-3-3G35JG-2BF0-30-2FFFF--3hlWISD1-ER5o5evV0-0eu7_RjSSprzrSrcX7X7X7X--6KDt-HirDjBnBnKMba5551-3rQbzaaEBnpFJAmhxnKSSSSKKKKonIKKpKpMKrSKIr5UrNV79V1----V55N-1V1-7-7-X79-IUBriLagwC2-3jm7YKkV7jUvJLaLMeudeP_LPK3PfeaLeaa_F8aaLLOaO__KHdOK8__KeePOdaaieeeiiefifeeddddaaPadOPePPeeiiveueaeeivfeiuyzjvvizEBwwwzzEE2-kkBB2-2-kB-2-B222-B-k22-BB2-B-BB222-k-kF-B22Bk0-F32nyevg220-FF-0--0-F003G-G0-Cl0ab9eefxzzba-AX5ODuklF2RKFUonyUUaPXeV9sgwrddaLaPNn2BnEE0F3RULpn9opxbbbtXVe-Y_1riO_LKfvEink--0BfCIpy1V"
+		},
+		{
+			name: "Middle East", ...colorConf1,
+			data: "EcA20EP9t--46idaPadePOddiaeuuuebieeiiivuO_aRnufezijzzvzjvfuuPKJFJGG3GPKGPOaTiiiedaduus2EYuiedn2nyffdv32--0202EzeRwoG--Ezzjevck20202zeufik43BFBFK0G4-0_J--nyioC03-0002-n22wyddyjfzven3Eyv3JJ20-zynnEyjnnvjizjjejzyy_wznnBn2zvnzyvzBl3GG3G--23FFo0-wzBB8m--ZISrMUUSpzrxxrKrrSKpppKKIACBnAA9mmgfBcee9cXef9geeeXVf9999199ge17V7Hgce7c15ABee99eeXegegegfBgfA9mgomeecXcXgeXceXnBrxSxxzHecefAUUJceccgce0AxBeXXXeceY9nTUJgoepCJnzzzxIBfrMpIJmnpHmc58EJmnrSbrMrUKJnIKxrHgrUzrxKCbtzprzxKISpxzU5Ulzq0a-NOzzxxzSxrprSSpxxrzrtztyUtaOaTObzxpxrUyObaOxMKBn9pMKICCKSKIKKCMKCACBpCACBonIJnKIHhKBpKBpBonCBmnHmgeme1ggeeeX17Xc7VY9e7emdBe97gfBfBfBfBf9e7X7cXeXc19eX-ecXceX9Vf9cee7V-P1e9cecX7e9X7X-0XcX7c97e9V0--O6glDk-BjnBnJpKKMSKrrMSSpSSrxMrSSrMKMprSKzUzzSI9cmgonCKIJppI9YKCKCKKSKKSMMrrUzzzUSMSrUUUSzrzUzryUaUyUyUbxlzzs7-V15X----V---NNccX-ccc0y10WeeeeV--70V6xUztWxMSzbbc6xta11cX9X7V7-X-eHeggnCISpKHX1V1X-7-Oa-N5Xe98HeVVVeeV0X9711-3--XjabvBG-0s7nSrxGc9-BFOunededziszBzG0-G-KF2NDz6rSzzu9d99-0FVIObk153LiReenAUbbxzxzrpxq--e9e9e-A1JTaukCF07J23pq7---cVM--WN3QV1khy_awxF-H4kIRjyV-oCGnvjx3J-16-Ny-U2iSDjyffv33G4F-CWtG2GxSUlV79e--2nbB--6j1s0REhiviizkJG4-4X-vYML77-ZHJ3Pv3-1cZeNponGtV-V4lDIreOiuBl-3-DAESjT9-r4cgTLLKKOaQjzyvgn3FBEB--1pnH-E4zQyafnG--5BKbgN-3Oxws0iCDazIKxKMMIr5OVX1V7759-05hoa-4YPwIzTXc0oS4-OaOaanwnB0-qYoDA9pIrzxzpzpKzzzzUzrWVf9cP1ceceVemcc7cV0H9uMvF-eGU9USSbuX975JYvsOLKOKKK4OaLJKPueTzjEzjzBn2zj3-Bnwn-B_HnzBpIzyNX7V1mi7bfz3J09L-pSKKCSrs5P7VX7-YBjWieueuusF-F03-0dhx_nILN-03vANuaQYl---6b56-jf6VcBknBBn-Bk2BnEBkBkn-BnBkBw-----n2Bk------kn04GKKKaOaO__KKKPLOKLKGKKLKaKKKKKLLKaOOLGKKK3KaKLKOaKaOKKKG3G43G3J33F3G4G4JGznnE2--G-G3334L33G43J-33JG3KG303F433GK3K3GKG3G3k3GKOffaF--GG-FG3---F-3I-3F0-0303F40GGG-G03GG4FF0--FF2-----0---k-G-F3--04343G-G3KG030-0-Gk-2DwkG43F3G0-30-F3F30-00-G30-0-F-3--G33I--03FG3303F3-I0--3F-nDtfefeuvfideeviivfiuviuzwn--B2BBB22--wn9PeLeeLeaPOfjzyvuiveuifhfifiivevefffjiafjiuifeypeeeiivejEivjiivijfiuieiiueuieeeeeafieeeujvifffiuzziviuzivieifiififPivfeifivPvyvijviefivevevafieeaOeueevfeeveeeuiufiaeefifivizizzwmznEzzBnEzBnBnznEzzzzwzwEzwnBnEnAyzzBzzBn-nEnBznEwzzwnBnzzEEzBznnnBznEk--22B2zkzwnnwnzznBnnEzzzmvwEEBkBk-B2znEzEznBn--kBnBEnzBzzw---4--2-n-RB2Dvfzn0n-kB2BnB2nBknBBB2-n-3-KK3JG0304-G43GLJJK_K4JJJKJG3F43G03F3-Fk3-3-k--FLOadeOaOaOOaPOada__aOe_LPaPOK_KOGGKKKKOaOKKJG-K3Gk--nB-FF-3Rk-JGGKaPPeaPPeuieW00-FF3G3FFF--2-J0-GJ43G3JG-0KK2-3G3G-3F0-3G00-F4N2znB-3jEzzBk-ivzzfjEBAzievivivieevivueiuiuufivzzzvivzuivivjvyvzejvjwzzvyvzwnnBzn_ejEBzzEB2-LOKOaMBBzzBnzwzizieveefifieizzzvyzzznyyvzznvjEzzwzBijzjyzznDzzwnnEyznzznEnEEw2yajzDjwBvnznEnzkzEznivvheejwzjefievveyzByvnmeziuvfiyvyzjnzjBwnkzaeO_PO_dLLG4PPvjivjivjiuviyviyzjwzwnE2zBnBnB2-k--4222BzEOOaeiejxPeeuuuuqeuaeeuuefifefefeeffeuuifeveffeueiieuvfiiveufiivvfeuuiuffieeuufuffieyvjiyfeveiuiffifefieevuiivfjivvjwwnBn2BB--BBnnBwn--2-k2BBwzE---0--0B3F-k2-kBB--k---JF-3B---3F03-k2--wkzEn2-B2wEEE2Bn0BB0-kknBkwE-kk22--eUSCSJrLT7V71K0YLtevvyl3KFzwGJ-DWcRRqP-hG7KyLafizivwwG03G0F-acjpSSKy-VX-IJltLePvV---PeSVrBgmoxprMRTTOa77X77-0N3vk7eoElnII93nzSKBooUSX0aNX0a5V-1pfNUugBJ-9iOdUNV-4v1z-Sfs-zBgmX8MKAxy5NOzKbse7V-0U-Fk-1y-lV-4x-6--g6bj-3L4kbaTYn2J-apmECIJlaN--MR8FTPQYEwpGF-2W9GV-62Hz-7i5cMKKGV---y2dwQvz4K-NgIMwmnUzJopKCCKKIJnKKpKSKKSKMKrMMbrWbWtaT6a550VN---X157cV-VX77VVX7ce7V-nZT45OKJLLPzjzzBz2wLJF0I80TwpCpzpOWa5P7eeV-9fnj-3pOZ6JOX-2f5dcs"
+		},
+		{
+			name: "Scandinavia", ...colorConf2,
+			data: "CoE-7lR-YWRa2AEJenMxJpbqTObaOBcX5NeW_xnVto5UUzzrzUrtxtxrMKMUSSyN1XXV5NNOtaUUxzztzUxxpUSIBpSSyNN1aUrSpCCIJpKs50WVNN--7N6bbzrzxzrrpSMMSSMSzs9X7-X-VVVX99ccVVDUV19D--998a6rztVXaOV1771-78VN0V0V-7V---YV7Xh17XOWWV0V6pTOs-8V7XXpCF5-N-N-N-N0VObSxrSrSUyN-aNOsObrxMABnKUaUs-V1-N5NUzrxUWbzUSxprzCKHenMtzKoopSSSzzxxrMCJmnABegmXOs1ABmnCSKCKIC77gcepzSKBe9XfKrHh9eprxmnKMKLmehKCUrSrII7XnMUSxrUSIMpIABpryURpMbtxrrSrMUWtbzSnKKABgnAAKUxztrMUxrsObWtWzzUttraOtbUtbbVefaOrxxpStySStzVXaNTNN5SJhSry1zzSgmpSM9mmgofKpxryU_rUSxrPXmhMQIKSxrUrrxSxrprKLpMa-2V7Va-OV1XXAI97ee9m8a6TNSxSzzrtyTStbtzyUbzzbtztzzzyObaNObaOyUtzzaOttyUMy-f_zztztztzzxxrSopKprKKMSzrzzxzztttyOtaOaOZnBnBmn9mmmpMzbbzWaTOta5UyObtV9eg7XnBNN-7-ObrTUzztaOaOaOaNOa555-4KCCCBnIBnBnBnBpzzSzzxzba-7--6WV-1--771-VV------71-----NN-5---OaTOaNN---0WWWaNN56bzzbbaTTTTUCKSSprrSrMrrSMKpKSUUrSxzzzttaTNOaOVN---VV--X--1N0WVN5-7-0aN79enKBmVX9e9177-X770Ws7VX-WbVccOa-7OtzaUzy1WbyObaMxyN6UV4rUUy4zzaOaMWxyOzrzxrrTOzUUUrztzUzzzzzaNN--770aSSSztV-6rxzbbs5-NOUzzyMxzUxzV-1X9777e9gf9ege997VX7X9X71MMrV-V75-gnAHommmgf9emem9eefBmenA1AHmmfCC9h9m91AIHegn9emnAABnIBmV1mmegon9f9mXenI9fbV1ge7tzV--cgoon99gc0s76tV99nCLo1977Ebs50Vf-AKJcc-1fMMKr9c7-Aa-1mpBme9c-5OWWV-XV-50a0VVUV---1N18xy11--V1717V-0a0VV117V7-0VcWaN7Oa6aNN--OVV0SrWyUxzVe8UxyNN7X2bVSMVN50bbzWVXhH7aNTSraTObbWV0Us0WVOaN55OaOaOV5-OsND0tbzaUrrtVXX6rrV-X91V0V-N-V7X17X99f17X1XXeemXcgeA9hBce17XpA17fKKCK9e97hSrSHpomf9ABpSxHpKIKHhHhIJhMUhKnKUrKKyICCBnABpAAJpKBnIICA9opBme9hC9nCKQ97-XhJmfIKBhJoXA9empmpHhMTehICIBehIKSRkgomfKQ1971hKxQBpprSghCCJonCKKqpMSpBX17XhSnBopKSgpKopnKpIJpKSppIJprSzzKMTTTUQKMrKrrps5-KpUKKSSpMppSSKrrKMI9fBnBpHnK779nAMrSxzwonBmXXppQAI9fCLmhBop-s1-WV1hKBAJpBofBegp9mefKrpqfABfKzbpIAKMKHpKKBpIBpqmpKKKRnABooppKpLmnKJpCBpKABoonIIJpBpBnIHVX9e9f7ceeceegpSRe7f9mmonCJpKSpSQIIHn99cXee9mgf9Xce97V-5OV511711-V--7X1--MrSTT--VcNUUWV-7971--X77c1-VV-V1---AJXN--N5-7eYWs17Wa---cXcWs2aOVgc1ca0tVVD---V0V--55-1eX7X511V-8V5-ge9pMKpKJoepIIBmegXc-fCBmgfCIABfIBogmnAC1gnBnBfAABgm99ggefBXXccXf7VXe9XX6ba-XXX7c91X7VV7X1VV1-D0s55--6USrMSMSrWWbzs1menB1N7VUsN----2bVemACUSKKBk-VVfICKSpg9777--7hCSJpC-----bsN-OaOa56rJnIKT0a5SrtaUs99150zy50ty-55ObaOzbopHpMWa555Uzs9ef79gf9eopBcgnKRkAJomVa0V1da5-gnIBmWVVVWWzV-VXAMLkVVXNOVza-1hRmVNEtSrrpMSy17VTN1mgX7X2yN56zrMTUtztzSxzMrStbtyMxSppKST-V-UTUraUy1Xe-OaN9nHpKLegA9a1ccX1nIBcXXXcXcefA9gX7VVzs9XVbzyUVef-Obzs91UV-e9WWaUWaUzrUSrUrpzzUUrsUrs7efB999e971ceXX9ec7c4rMyTN11X-SprMMMbVcYa4xzzrIMpry1X-V19ge-zza5OzMUUUKpKps1-1OyTSzKMKnIKKSy1V0WxzT19XX-V-Xcf7gekcaUby19f9mdtyMtbzxtzSrWUzrSyOzzbrtrV9gXf1me-eecaTMs7cX8aTTMxSrMtrxtzrKKs--VXDOxSSSSCMUy-XUs7gV97V6tV6xprV7tVA8ySrVEzzxRopzbVXOVaUzbtzKopxRpMrV5StxzrzUV7TOVgiOtbaUzba-emVOtbaTObtbzbztbs9emgf9fBggf9mnAKRpgmmn9mmn9egge1-0ttV9mmme6a-iUbbzaOV7NSs5O_s8baNUVaMT0brs54SMMUICMaNOzzMsD1eeccXUSs8WVObttVVgfAIV71g7XmkXtaT2rxrSryOyMsAxs8a5UKtWWxpKztyObWs1mmon9Yy-X7N9on8V5OWVaNMMSrStVXVcV0WaST-aN55OVfABda6bUthMSrT17XN1fVU_ttzyUwprs2zzbWa6s1eopAA99eef9ttbyN9gcX0y-VDMptzs9cdV6s8WvKy0zy171OsUxT0V2brBpMs8s51kTTUxzxzxxrV17es1mfA-egeiTTOtV55OtttppSzUMV199-8bbrUVcAtSrs7XX7gnBnA9eTOs1cT5T2WxRpzbtyN9bs9ABkYWbbaShMsOWt_QMIKKxzT18VXTTUT-1hPecVOUVbaUzUU_rSSUVVX8tzzUT-ce9f9VemeeABfB8a5UzbWWWzzbbs6tSrVVWxrV79f755OWtyUs1-0aN-OUKMpry-c17aOzWUIMKprUUIMa-1X918V770aTObyUxIKSIJpCUVNN5--sNOMVN56_pKCJpSJoonKMVNNOa---OVsOptaKMT55NNUrKxxrMMT11115N7s9kc9V9VttMT0UTNO_xU_nJpUs7NUSzzSKKUMUts1e1T-c5TOVNOaOaUy2V50_zSUVX119X7USxs7--OzSCUbbKSzsUxRnCBnCCBnKrCIKJnIKM_pUVN5NN-7T50a5OWV0aNNNOWWxKKMBnAMxpIKKIMaSxs1X6rV-D6V-sT-UUVX1e9Os7zy-5SMUTOtpKySqpCBoe9nCTURnBpyOt_oonBnKttU_zV7a-5-tWWWtxxrqpKTOttSMsOrSxhBpT6bxSxrtUUIKAA9nHpHnBgeecf1ee9XnMxzxrUzUQCUxSs6SompyMs-0rSTUxtTMzzrrrUV1-sSxs777UrrrUMUtzUpMJn9e9ee-VhKgnMzUrynKtWzrzzzUxJpSKJnACKKs0Wba0V--UTOxyUrxzxyUxs-xyUrxzrUzprzUrpzUrrUrSyMrUSrrSUUUSxUaSfMT6xrSzrUrUUby18SrSrxrUpMUTNSUUzSSKSMSrMKhSzTKSpMLpMCSCCJopCIJpJonBonIIHnABggnBnA9nBf9geeg9ecce9cf1e9mm9mecf1eeece9X7cXXfBn97V9eA9cX7XfMQB97cX9997VV7ceXXnKSxxpSKxSxzQMUtxxhUr9Xs1AJmhUzUUSzzKSz1hUU_Sz_xrrSzUMUKrSxprqnH19pSKSpBpQABhMrKSxrKSzMBpxrppIMygpSrBopryKpzKy0nMMzba0rrUMStUSpSrMryMrxzbyUUMUty5-Ortbs78V77X77--Xe79pHfBg997X7X7X77ce-X7-zTOa0VV75TUUzUrrxSrrUrzzwfACKrsObs6TSz_zxrzxrrrtVN5Sy-4W_BQCq0c--5XUc-X5rCBxMa7PVDNUK-nSJp971_ESHe-mocmeKzxIIOxttzsTT-Ota0ee-057TlBpMMMlsOV7Xe---Z41V6NZVgpBmXJgnKMpr6WaNT0c7--3XZyYK57-DXainASrrUs-cXc0D9q9BhrKpMy6e7VHVV-19qEB--1him-7XjEvIohy--0DA35ggnKEGzTOs90X7-DANdhT7-7Xt_vISba9c11AoEBnACBxrSxSa0Wbba7ZmcWXV0Nl-LpUX7--232P--Y4hn-1NmHcmmnUy5--yBtECSKpGaNP197-0YF0nN-QYKBvKofomhMUtzba-1WcBcV17r9ZnpzsX9-4YWUUKaNc-1DHqB03YaRQJjHc9K9Mp9XmrHhrJhromghUxoOVT5OzMxtV5VNT--7VBc--DVec-5DXQxV-9EWOSk-7cyKynBpBnABoopJ5OaTT5NOs-OcVH7zjtnSIAHcgnCBomn9gjzUxrxCBeo6yT5Uc5Wzxru-e-Wy0s0aPc-39Fz7gpKSBcCHgcWggnIpRObztbxHggpoehryP6tbaT-VN-17---ZFFrV-t3OTpa7--GJ2c--GJFN-5GL3xc-9GPigq-T84fLpBpAMHpSBfACoemeoefCACAJrzttaUM5TUa5TUIErr0WWxOtWaOzyNNNN77977KACKBnAC90aTN1VN-7c-eGPvhSrq0ceV-1GRaD-9ZO8jSpKF--7--ZPZE--O6VKyV1O6qJppObVXc-aHHGgonUbVV-1ZZurAs1XHQCRnMzMppopDOVNWbttbYBec3mgce---HWfN-LHY8SS5X--09ahV-tAuEpN--TI4hxDUT7c-PI_QzrqXX-3ZxNzHzV--ZyYEV0dEl0pKsV---J06s--J71N--J8is--JDws-5JFcRs--JKrN0iJQsgnonCCL6xba6yOWXe9e--_6BUV2dHDArSUrz1XXX9-E_ADrICMKoN176X--0I2AV58JkgmgfIIICCTOaT0wNN--PKIxzUTcc-3_KPjIqV-1_MDbCV0yKYtSHpIpCSKHZlzLNV-10V55--5Kcizc-9KeMwq--0MPIV-dMpxrc--_Ul6V0OMzAnSN7-O_Wd6ppSppKMwNP-7X97V7-F_Zn6CzUrMOX9Xc7--_a82V-0OcIV-8OxHk--LW2N-DLaXxTX--4fBH-2_fwzLPV-0QFUV3OQn6xKMSxy0X-ee7-F_tjEBemhT6zzP7N-1_yrzR71uMvlwxIBemeefSu6zp9zTOzq-5TUxxWc9A97-9N1TU5V-0Va0V-8W-ps--NFDs--NFLN0aNK0UKptxxxrUNXXX9997V-DOBAzTX-2aJfQBy--0a2hV-0a3SV08aU0zT9V-taUEntc-5OtESV-eP2MzUSk6e9c-XPIwxMSN7VV-ddFArc-7aafrpUq-e7-TPquRnTTNc-mPxXxrrKlcVV9-3amCbSkV--5oXa-Gat6zSSzrUR7X7ec7-HQgPwxu7-9R1zzP-1tkzEmgj6zzXc-2b3DrLP--Ol2rq-78lqzrHegrzzzKEUTN6seVNcgeX-kbAFvBghCIKIIBpBognIJpMKSSxUSrSSxUrpK--0ogPV0OpIUnBOs-SbSprpUSI9jxa6aPeWzz5XeeV-PSyVwpEsV-CbXszKCCGWbsV7-0bZmzN--bbTv--0uTlV08uUInDTV-OulbqV1tuqQnCMF-5Ue-2bh7jJP--0vJ6V-0vjlV-OwCMqV-OwVCw-0twdKojFTNV3dwdbnUSMzs-PCA91V-HUDFBraV-5UKsSc-DUR5ByP--6rqa-2bsubMc--tyOApa7-yUdojJmnIqOtWV9--bxunV-0zWdVAOzeUnxBmfrrICrUUUUrpHzWVcWX1175X-Xc--UzJs-9VELhk--e0DGpX-2c8yvE5V0P1YAmzTX-Fc9eEBhHgn5Uta5N-OcBY6pSrIAUJgTOa-09We7-GcENbMSppzye9777c-9VzggtV-94IUs-9WO6SNV-95_ss-DWdaSDP-mcR2MBoggxrpUzzKSEzxUqUyX9ecWaNVe79V79c--WkEs-9WoBzNV2u6I8rMJpGaOV7Xc-9WxeRyV197X5onrsN9-1cXrMEc-uXElzMKM575NHe-09AHrpNP--1AZrV-eBC4rX--7ndq-4coH6ETP70HYKWxSMOxxc9XWbkd9V-9Edzk-HZ0xhyPc09Z7pBmpSxpy5O9V79--82Ca--86Zu-2dAgzUcV-PI-Bq--eIQcrX-1dKuADN-H_k1UrXc-9_qWSsV8uMPGmzMTNUUUSEMSxxze7e71c-XHee7-Ha0vzScV--aLfs01aO1woxIC6a-0tuc-DaUtSq7-6dh56pM0X7-7dp2zMSR-X--abWegmjUOWc-EdszfAKSzV5UNe9V1PUQ2nABUzc7-5by5U---cAvN--cHps-5cLGhV-DcONzR7--98tL-4e9eMrR7V-HciUxpX7-udBoSJfErlbuVX-29aVfmxIpGa7P--DdjHRtu-6eW7EKSN11--9XeD-jeZFrBfCpCSxpSrzJ5TUcOzaOXfBh9X9X--1c-1eGYR-5efWrCracV-1fXrV-ufyWxkV-ufAyBoeezUrzV-V-ugwopa7--fJNN-LfPwSpkVV-9iyzs--fqes-ifsnRxzxyXecV0ejZ8nMbe7-9ftmzP-FujbporSIzSpMUISCxzx-VUzrrTc6zy7Xh9ecVWuXX-7mcVHe1--ejc_xc-3ezMzK51-4ezOMKGV7-1g-Dw-Rf-nQAA9gnpMtzzzbttXXX7e-1f-oITV-agD2xzola9X-Ff2bjASrxSr-97VV-4f47MJyP7-9gJYUP--9lWRs-qg_aBfJxrzs117--gavs-PghqUKGX---fCFz-09nVOpqV--9njxk--gyON-Dh4IxL7-2fGYEENV-1ob8V-upTOpa7--hVws-XhbrSpLOcXV1eqiCpKR0yX7--9qk6k-PhjSS9c6y-7fR-rUrR7Xc-ehsTBgrqUscc-PiJ1hASaV-bfaA6AI9MMMHhzpUbzOyOz1X97-1ge7V-1tzIV1uu69nCrtwP-e-9ffCUprUkVXc-5fgVYCM5-V-9vpss-5jH-E--HjT-wxu--XjYHx9xSVN-19yPqognyT--pfugbS9rSrSMSrzpaUpSUMSkVV-VVVPHgccX1XX1c-9jiyz5V0Pz_GnSN1-4g0rMKR-7-HkBVxlu7--kCK70LkGUSpMSrOzuXWse7X9-4g57jrTXV-DkQfwxX--B98T--g9En-1v1y0pKorN7-7--gDm6V-v2vCxNV--l12N-Pl34RxUcX-0gHXnD-7gHhbKrq7X7-TlB1xMxcVcJ1lBSSrSSppzUzxpzT6xSSrKrMJopBmcXcxrMRUSpMKBgc7N1cX97971AMHYSSrMHcce7eVVN77XVX7-Oc1dMSHooe-V-CMKSSKq1VUpkUSrUSCMMMUSzSprKKHexxrSSxSxxyUSzzSUUSpSpSxKKBhUpttx57OaP0WyOaP-9-0V7X5CHcV77X1VVXXV-97cV----0c-7VXcY97X7ece1XABcc9--23yxV3v42inCMKrbVBe-0xXV-A4Ugk-aliIwpIMs----BS4D-2gSBER5V1v6fGpCCptV-X--BTnq-7gVUzKKT-VV--m1DN-qm1FRfpppNVN7N-DmEsxT9-QgZUjCSKEKR6xGWe57N-ZmVV0A8RQxR7--A8TUk-imT5xSTTTd9cV4Q8thxpponSpTN7-X77V--mZcN1immTUMSKCKMR16VUSprGbxkXBcVcX77V7V-TmmkSpUVcV-un7nSrMSxkX797V1ABckpMba99-0go5MN-5gpKjMMX7V-QCSMnV-vCllpk7-Pn_7wppc--6gu_jIIqN7-3gwCEUP1-HgwGzMMMSxlu7X7X1V1vETrmxSrTVX1--C-0D-Eh0RESoxSRN-X09--AFrbk--oIos-aoMTSIKFN5--5h58vIRNNV-2GitV-vH2_psV--oc-s0aoc_xKMSJe9JUUqN5P17VV-XoimSI5OycV-fHxjnk--CB5q-0hHcbN-VhHl6KpASSSKIMxsVWyP77VXV-7-HpEKxUX7-mpKbRoeKSo-NN--CNDi-7hOczxzTcXc--pboN-DpiAwpV-5hTmMpR5X-0QMjrnMN7-1hUQAT7-HqBoxK---DqWZRr--IhdNrKrSzOV5QBeX3e-9hfVIBpUzX17--CfpD-phgbjBmccjMJrzke76zrrMMSrUrpSyc17VVX7X7X7-HqmXSSX---qmvs--qqEN0HqtqSrxKESrNN7Xc1XV-2R4lV-fTzpnk-1hwNUTV4Prr2xMJnIC9EIrJomnqUKKCJeIIMOxp9MKzKSr6XX7--V57OV70WXV-5-N6a--V5fUUEofHchpKMOba7X5UTP7-0hzqEP-2i1rMSX-2vVmOnHpplxk-WcV-9sS7x5-2fXLhnESoxu7T17-2iCDURP-3fYKfrK9fISr6s-57---sq1c-DsqBSTX--DFu5-1iHcjR7Bmt9wxogcf95IIESpAAJegxUJfxI9onJeCrrrUrSUSSrSpMKSpUSrMKrMMMSMSppSKCyUUz5N71-0aP5OzyOzUSrUN6aOX10ty-7-0s-7cV-7X1X1-VX9XX7e9cecge16yX-X7X7BmXXcV-2iHoMUcV4Q_4_nBrpyOzSq5cXX7c-HtGWSpX7--tUGs-5u0pzc-Tu6aUSS-17-Tu7VxACOa---u7iN-5uEYS--5uEcz--auFlSKqNO99-2i_aUGuV0QdwKony7-BicpMJrMSc1-5V0feEApSWcc-5uYrSV-1uf6R--igpMV9vfYUppKHexxMzxxrUROttX1e7cW97HX17--2fYfV-Qf_oq-0Afj_rL7V0vfwMpMaX5V3Ag7opBpKpT575-7--fgPSna-4iqejAoOV-avQIxxrycce-0isQUF-1is_AGc-LvkFzM5X--fjqbr1--Dz_T-6j-zjASq75-1j1jzlc-9wL5ww--2lNpV-flSUxX-3j5MbM5X-Hj6HUJm_prMSk--7X--vlsIpk7-HwadwjOV-1wepR-2jAT6Ia-1fnTTxHnEy0X--Anark-9wvRwtV5QospnoxMSOzr0aNn9X797V-Qp0rq--QpG4o-0QpR0mxlX-4jL0rSq-c0XxPBBfBnEMKKyNNTOVN1e-6jMXUJlz11-EEgqwecX-s5OaSs-AjV-jKppq-17c-9y-hSkV3fsD9ppKIKDNNOVV17-Ty3bxJp0V--9yERww-0Ax-_npV--Ax2Ik-9zfaxkV-vzr2xk7-A-1BRy--3-zvV-w0lpqTc-I-kixr-c-A0MPENV3R55SnBpKkWa0zGVX-nkNrfACJeonMrxSrrrSrT55-IC9e-0ztVNX7X99--35IBV-R5UCqV-35iqV-w6ltpWc-60xjx--A1PugyV-B95ws-E1cpgpV--ki4IV1wAqXpUTUa1ee-4kl7ACOa7-02LhN-02YwN-I2aoBjy7-f2fQUKrScVc--I2gExS-V-b2tvSppo-7X-0kyWUF-1kyZMq7-036Ns-M36nwhr---RFUnqV-BFvKk-03Kgs-A3kyxNV-wI34p57-644wwN-64BcS--04PSN064PVSKSTUF14HcWc--BL4Uk-64ckSV-04jBN7r4jQxHppKKpMJxHe7V1-ecnIIKABoopUSognBnIAUtbotyOyNOsNTUSJnKq0a6ztbttVOzOVOX-5c0a5OV1XX7Ze9jpI977AI97--lSWj-FgMRSmf9zbrpzMKc0bxrKESxrlVXHVUbbpSkV7XccomXX9ZcP7-E4xwwja--lXvjV-wQInrsc0Q5ozSpKEryObbuVgce1c-Q64OwhMWX-0lmZbk-0lpy6P--GtFD-2lu5jKVV0RUb6mp6V-0m9erN-5mBT2BjNOV0wZLzpUk5XVPBZWrmmmmnIJrMSrSSSSKSMUxKpKrSESpbxSSrMOts7-7Ve7cnA9119-Oa0Wba7V---V7---ece-cmKJQBmp9ggzzrSKMMy-OyTTOX7X997X06mLdEBgnABnIIIICCAJnJpCCJnKJ0a5OtWa55Oa0WbaTObcV0WWV--I8QGBxs7-U8RIgpzs7c-29W_w-3mdg6Ctc-0mguE5-ZmlOjKBmmonUUUUbw-OzwN-VHmc1eV-wgZprsc-rANbgnKrUtX17c4UAhBhBenHYBocVgprSCHZnrrUMSxHnIKLOa-0VObaUzxWza0bsNOy1X7Xe9n9cV-1n8XjDN-IBkvzxXc-2BlYi-RnBjzIEMMKppKKF51-1-0V-9--nBzMVXBp7smn9f9XehBnCAIBomnABmceXeZegccZmonAAIBnKSMSrMVc57OyOaVUzWzOzxxzzztxzxxrrSrtbVOWtVN-OVP7V-0aT--RstSq--gtJnqP-3nilrCq7-AniufCAM0bbcV4UEFHBomghIHoonBnCKpKICSKpMxIBnJOtV-OsTOtsN0aUX7VN---6zOa--7fJe1-7nuYnACrtVc0EFVzgfBofKUUaOV0a73zH2ShKICCCCICCIBgnBpBpCICKpKCKRN55N-5N5OV0a0aN5-NNNOWV-NP7-zHTMwnJhpJ5-OVP-5oiBECSkV-0hBVAn9M6V-IIDDgzZc-2IgAR-1pHnrR--2KH6w-4pLvUIOaV-0KUwN92LmEgfBfBgqUSCrKKKBeVUX5-X4JmoocX-57NNmconHdBpJce99pKppppKIKopMrtxxxprKrMUStaN7-6yUza-7X9775ObzzStV--51--N-PcXX7-ILxOwoOV-UMCUghM5N--AMQdSNV0STQGrScX-8ptlrCCCta1-0CTnYnqP-0SVFsrM-70Eq1sfHnA9XcYCppSKKSErrSSCzpUUzKTOWaN0V0WX7VXWa-2KBme0WX19c-4qODnHrVN-2OnhB-Cqb12CCKJ-UcWV-IqjjQSrKAMzTNV7VXc-Nqu9fBnACIHnSLNOWWaOV--hjnFrX--r-vI-1xkFZpprOu97V-zr6zAApICSUpzKUxlyUrwUxKV56a6a7VVXY9_HmmeXVX1X9V4CmRVp9mrMaTUxT-e7c-OrAdfJnKrrSrrsN0X979X9-0rFTQP--MKdX--M_8P-DreVnCCSrzVVNec-AVFgBTV-T02FyV0L0slMs1c-6VTDEc-6V_Ajc-AV_JBtV-D5hsk-b_7iwnSROX1--OPBa-1tQurDN-Ya80xERTNXV"
+		},
+		{
+			name: "North America", ...colorConf2,
+			data: "DwCd1sP0j--RaO__ddedddifv2EEznnnyfEeRwyzBBBB2Bn00-17-2fEMK9dCrtzUrrMMqN-X-789V----Sf-T--yfzIrzohrxy6kX6rSk16k7---11J7Z-35CISoOxsUKESpEP6qOV6pJp9mec17cmhpxUSogfBnMMGWxptyUUzc5UrtttzpoTOV6lVVZme-gcfBc5cUrztbV73cWztaEO-1I5dLOfvkygzEyaOdzjzsl2knvg2EW2zEznvzzyzyfyyzzvjuMyzdzjivvvyyinyaTVyydzufvevjgwBoG-znzdiEdbg2vkyjEyiazuK_4OGaJaPjzYnzzjBwnvyfiigEnuP_vjuiaOMdezeififiiEfgzfusnEeO_ivviEuvjzyzivivivg3EjuyjiezjjisnvvEffvznviyviYEYyzjygnBz1_Fl-zivjEzyuwnB2z0434-4G304-44-CGJFKJEK42Bo-38G-340403LK2kl44G_GFn-G402l2x2433432vuvfvY4-l-0-FkF3G-J43G3FJ3-G5J2---20L-Y-8CqLKOzvEjYn3GF5N0A3mrIprrIryT1Wace1XV0F2MKYo-H05ahSVV1R1RHOKefiznn0-z4KUy5MEe17X7Xa17X7X7X7X7e7X7-17Xe1XeX1VXT0aN7X7X9X7V19X7V17-Xec7X-7X77X7VfBctaT-17917-X--7V0V-9Xe19X1cX991hJpKJpKMSKMSKUIMUrMprSrMSrKMSKrKKrMSrSKrMprSrMpKMSMMpMSKrKKCKMUzrxrSUMUKIABceV17-XcX7X7917X9X7X7e--0aN-7V17XcX77eceVX7X17919X1EzyTN5T-c-7X77X7V197XcVXN-7V-17-X18VXD---X7a11--7a17-99177Vce91X7XX1cVXe9XV-N-7a11177VVX12V0V-VX9-N0VVVX1-1171777s0V5-N7V7Va0bVN0VUV-VN-2Vs--a-NTN0WbV50WsN5-N5-N5-N5-OrxzST-VXcc-VN-1N5-V51-15OxUSxUrxSxSJpMs0V-8V5Oa1D18V91191X11-VVX19nCSSKSSSrMrKQKpK7cXXX7Xcs-1X1VXVV7777719-csN7714yUSpUSSryN77c7X0V-16a0VenB5-D0WV9X-a0WWVN-gpC7X-gm10tV0yN7NNN1VV-N1mm-N--s-7WWyN--fLocccAAC9555NUsSpy-Wa555-c--hIJpCCBmg5NN-NNN8_y--N0VD-epnIKCCLVXYWV-919prKSC9cV77-V0Vc11111TTUVVgkf1991D-e1-ceXX7X-WWs9cXXgcUxy10Va1cXei1monICI7g9-XgegmVgem7X6xyUVc8bbta6bbtrzMST--15NAA9egemfABXnBm9n9XmfBpMI9mggfA1eceeegn9eeXe9AIBme7g7Vecg7dV9mgecVfWzzyUzxSvCMtbtbzxtUryOzzttbtaOaTOzs97ea0VenBmN5N-XN9X9XiOa5ObtaNNNNOttVgggnB7e17OVN0WbtT-tWV5MV0ztbaUzMy2aOyStI7fCMtxrzzbKrUyUa5Oa0bUsOa1me7f9cD-1997-VTOWaUV-WWrzzxprWzUrqnBnCKrSSzySSza19Es9aOs-c-WsOaN50V-NObttrSSxzzbtyUbzzUUzUtxrUUTUyULpf7hKyTSBpMzpompqpSxUrSSrKprUSMMUTMxSrKSKrrrppMKMSSprSy50byOSzaKgpxza6zUtbz_zUmgf9mA1egmgf9pMsOzbtzMyTOzzMbttWy2WrKKIKSKSUtVOsUCLnKUtza5SzUxSSrSSzUSrMrUzMttSxxMSSHemgnKzUSzrzxzyUrtbbpSrzKtKrSAMKSs-T---X55UbsN9eem7iObtztyU_rQMKrUSMzzSrxUzzbyUxxyUs18s1UaUprzxMKJhSrMxpps-V-798VUtaOVOVD-XhHDN-6V9XXm7ce7VVtV-951-Ors18Wa-7-177--1-UVcOyUbzMTUbURopIKCIA7f1hMShJonIMTUMUSUKKUMrSrRchMJpSryOxxhIMprSJpxrs---Wa4xxrSprKmpKKxUSrUT5OV7N2a--7-ztVYVXcVV2aOzrzzxrSrbrIMxJogAMSMSUUSrrKJgpQJnAJX97hMMU7fHeX-en99pSrxwopCICBmcXXccXehSrprUxzbztTpKJonKCBfHeXnCLpBmX9XpSzrpKpABeepS9nKnBofKwnBopRpBopCJpKpKKMKIKxzSzzzxKMSSSSKxKSIKtTUWyTObUrrxzrzrbrSzrMSrpzUxySrxxzrrrzzbtztzyMxrUKQKKSSppMKpSKpxprrSrUUSxxrMprrttVD5SrV-a-NN71-cX7791-77VVVVX71-TT6WWbWWWVN-NN8V711-V777X11XVcccceXVXXNNN8V-15-9-VV791dV1-VVX7X1-sNOtrtxtxtySyUVNStUrUrrbUMrppzzrbbry6pKKrMMMrMMCSUUKepKxs0aTTMUUU_rMT-OVN-6T-7-a-777V-5-XMxSSxxrxMU_pzhUxSmpra6QKUbSyOSSnMxSyUKSxCMKUtprySzrxxKttbzbSrbTN0xzUKBpyTSrrMtttzprrSSrMSpprKCILpJhBhIBonKMKLnKICJnBgmmpBm9mnAABgggmeommnAAAJghKKKhKgmpAAJpIJopCIMIMIJpCKJpKUa-s550V2VN50VNT0s5OWs6VT5NNTTTTTMyUSSxQJpJpAA7fBprxpttWbbSSQKSSSMMzSrt_rUUbUbaMyTOVzTOs7777N70V70_pzKKzbbSJpBp11hIKqnKUtIAJmnJnJmnIBnBnJnKKLpBnJhI7e9778V1N5-NT0VOtbaNN9gmmmkfICCACBgonCBpQICBnI1fJo9pSQJohBchKhCKJopSMKSSMrSMCIBomooenABfAIABgnIIMtsOaObbxI9mmon9gnKUwpMJpJpJpBmpSCShMKCMKCBpCK10V7-77X1-cVV-7hKKCMKrppMKSKpIAKtxzxSKpxnHghUySrvCICBfCJpMbnAIBhBgompIIMC9mgfCCKBoonIIICBfIIICBopIIIKKCKKSKMUKpKxpSSxxMUMKKSKxpUpKrSKSKSKnICCJnCA1999-1A9e-7-cXXX17V70a-f7VV-1--7XXm997cXX9AAC9mgoekccXg97XXABmkf9f9fA9emXn9emgmgonKtxgnBfI9nBemef1X9-9gn9meeXA9eemegoefBmgnBnC9gnC9eeggnCJhBpBnKJnKKKKxpIKrRhBhAKBhKSKKKIMKKKF7Z2MkT__44OOaO__O_LLTbYvkyffBkEcw2knyaaiBkyEC-x-nl3-3VQ3QMsc-O-txaOjzzk4K_-7VS-vCSzc7V0J2qEPevjFF3F--6mTV-FGRlV--92TV0kLotbx-a7AuPnIUUoxxzbzrKrpKKMSSSlWxrUsWtzKlzTUyOzbw516xSUzWbsX6wNgc55Xc7mcXmgmeJmofomXXIBcYHcVPXZcVTUceX1d9me17ee9-A0Y6qioC-asBoenIBjSUIBjUSJe9ceV7177eV7fC9gpzzHeeICyUxA9efIrzM0zKaP6kOxIMtxzbxBgef9gfMSxyU6ttaUttzGzryOa-OV1XCJc9VcN7---40ekqQ--NDEDyV--Red-6VumnMUacX--0pcZ3P2fIBnrozKocX7X7poxognBU6zbzojHxISryUWX-U0XV--V9YHX7--6M-k--Do0VDFSy8__bfuePPaEykFkk03C2-3VwCbAMV--0t6o-92oUS0V4FUCSaOQzBn4---ywe-Y13Y5KOjuRyaEBG2F--GW_V0FZtli---3co7-38GgR-93kCEP-1kaQpeNn--L4BWBn5T-BFdZS_ePOvjjjjwk3-FJGF0sL9epCyN9-mkhAhaefdPOOaOd_eO_dPLyiiveeeyEnnEiEwBk2nEnBnEEEnnwwznnF3333GGKJJG3G4KKGJ-94g9CkV--ipW-VWVbABxrMKz5OzJxsNNNVXmXe9c--B49F--PnOV-FqcSV7sQLqmeeppUUSSxtaTU6yT97997eeMC2a-LKOaOaOi_vdPiuzjd_dvijyu_KFJGF33303FC2-oBBB4KLOOaaOiaeduaeeffdiuzzzyyydKKJLfivjjjYBwyuyynzyEnznvszkxFzwzjvEBG0G2zjgyuyYvybvzjyieKbfYBkwzivYvyvyEiviyvfuuuPfePPaadvvvjjeOLP_MdOKKK_UeaPMefvjjYzYknkkzznFzyEjzjfyvvEzjeQfjYvzznzyiyEsywzwzYvEgkG43K4GJJKGJJK3-zjsEzjjvzwyyvvC3J2G3FJ2yjFG04FK4F4K-OKGJGJG0GK43EB4GG2EEzyvvn2yduyvjyinzx33G033Eiw-o-KF2k-GGJeKO_-0PL_JBFGKOF_KOHK4GFxOHKGGFwp08J-yEYnlKKFJBwFJK9eOFHLTdJ-kkn0KKdFPPe_3-B3HeOaJ_2-EeVC-3JKLdi_FHK20dPJFk0O_JBl3KT_3K5LLfjdJeu_Fo3_JiePJF30-l3FGJFoGF-X6dJBfEOtsV0FxOWbo-D6uCS6X1v2zp5_4fu_4ivEdiuPdKJF45aiivivyyiviiijsn-znBkBF235J-GG_-nBl-w44aKKG-KX2_nCErSSSkOWa11XeXLG1g8_OK_OOO_aPuKOdajsydQjznzydLKK_5KaiuyzyvzzzyzjvjidLK3KKGKKKKKaQfefjizjzyvdefiiznyzzyEwznBzwzkn2Eifzjufwyyzjwww--GPO_--zVBnvgEekk3K3GG3JGGFFG2B-333-0--03G3HK4ePeefeQiaOK--3-0-JFKiydeJHKJ2C40GG_ddKFnB2-JF0cWyMmmyTN-ZGfute2---ZAWV0G8Ihi3--8AO7--I0sk-7aWNk-RIFpuEF018vKgpKEM6tWV7XV--L5Mk-NgeYlV6GUzf_eczf24_-k-1C0lB-I5ZZqOynkqK-5YJBIArlX-1Gfu8_yC-6YOlnKIOV---5qJB-DCgdwja-C61_LTvoG-kYgE2KIJnAAMUxzUrOxzTOWaZcV9176qXeX7cVDlqEh_PPeffijjnEBC203FFGJ-mDm3BfEMtyP89-C6VITdTn---2mET-26bSqk--EMts2wUQzuiijiibfV-EYnn3G4LJJGF1szi7nJnr550e--78qw-1FShy-27J7aR-eFczBxKoT7-V-oWi1tLgwk-9FyXENV7H7Of_bisywyoGJG-GZSgYBepxxpyN5X97-gZ3Btfw30yZX6E9mY9eememXeefSzxzT6xzUrMommceKIABhBeMUSxyOWbbbxzHpATTTV5OzxzSy15Ua5O93eme9cXWWbbyVcmVAmK5MiyiajY2Eil3G445J--Hp-s--aMYk-0CdpV2HW8xuvoG-28GGLmemxr6tsV-oczDQis3F11JY8BgnBopr6ztzzNOWX7e7omX-0mZRx_UkRdHRBnKMKpMJppJxponBop6bbzxpxKlbWa0WWWX-UzUUrMzlxrWaWXVd9n9WVVc91e99X7eeVjHcccOe1V--dDLF0OOWLmpy1-6AISazG-5_hMYrq3e-2mvLGeyn04-Ca5w69nUrSq17--QBDVUivzzlJKJJ-qNYawozzyNn97c23mKCO_OLdiffgwnBBBl-J-5OPQhV0wnGIOeeyin0230F5uPAsSSUrHprMSI9BenCHoeXAIrrUUUzTUzyN56rzbV0bxbtcOyOttztcmefBgfBn9ef9X7VXX7X7X7V9IG_jaaeivzB-pFn2KJ09Pe2Rhbzzxxu7cemc-CCRoydz-p--5k5q-ICZKiPvjk34--5npT0dDEw5Oeuaufdeu_PeijB-BBFkoFG2EfswFk3-JLJ-9Ul6xk-7nzgraaOeQfVBB-n-1XVgnghCEpKSIIIMKxML5-0Wc0c5V71-7-C0ccQ-B92pWnABnIBgmxUa-UbtbrzzrtbbueXBee5Pec-C21Ktk6e6I4rJpIBrMM0c-0zzbae91c7Qh2tpO_ddeeTbeeiiduuffeeefydbefjiedeeaijY-nnBwnznEBnnEwk-nveefdbYw3B-2koFFnyjueuTw2FyvfiB-32G0-oGK3-OdveeJFFFo3BoLK0JF-40OOaOa_8KKFB3OKefddFF0--02F-00G2--5cWxzMSV1V0JNHMaB-uYI9RnKMGWWaNe-HJRYn_aayu_jjjeBC-FJFFEjiwC44F2uEcgpJxIIy5-NVV-07cwk-PGjhlV3oZcraOPzkC-5eHK_nABpKKrK55-575TT-e0fHO2qaaabeuauQeiffeQffF-33-kk-BB222n4J3K--9LCls-CAWRtk-1QXrVIK7Wd___4aLywyizYzYEyEBw0JOJOJJ-edEvRpK5Os1V1CKLfOdOyszywkGG4-5etPbKtae-jKWNneePfiuiifiijifiw2yfeii-zefeeeeefYBBn--0033F3F03-G-3F03-4-0GGGKJ-ufB4MHjSzSomcXfMpzS6xKKKKMSsV-10a7V-75Ouec17-6Lbx5JE-PfeifA9eme9AJzrzxztyN57-SVW5uU-0qkprRxMSKSpKSrtV7X7X17--V-58t6-LgVLbBpIKrWzSqV0V7Ve--O0SB8LoLpxJnBgmpICBomogn9oghBnIBpUbWxpMOzzVUsUbaTOa55ObxonKESyUSzrzRUtWztsTUzrMtcVV-V-eX-0Zegee977XX-cemcY9ecV8q__U_OdujEvnBmK30--hDurV-5vfz37hzjz9gemecf9genrI9ggn97gegegoenBgopCJonEJUzpCKKIKonKSKMKKKSMSpUKrbzV0V5NN-77VV-7X-WWVV-N-0aNOWWbsN-0yUUUxzrzSMKrSICpJnIIErL5NOaUSxpSUMSSkOWWaV1-1-55--Vc7X5UxrpUSUxty51-cVXX97VcXZecV9r1ep_LLasznvgyw343F-AZ4Kk6pnU1tLuaOG5K_a_OLLPKeOddYzwwwzEnzEnwzE2E2C-JF3-4id5YIMV7-Cs_ftkIvpQOmnA9nBgf9YBoooofICBeeCBoqUUUxtza6aNUWba6aOaOWba5T5THcV7NLKvdveejzG-33F-5q05bAzy9VCvXK8_eeiyvujin304_-3-0FZT-95mmcgfAACBn9ggeAA9mmnCUtzrprpUSAAIBggecmmggghM6tzNOtttyTTTUbbbxzKa5N0bbbbbbaNTTTTTTUy551ccfAA99XXcWnw5hG_OLKOLKaO_LKOK_POOKdaPOaPOaaUzBnEknwknzE2En2nzEnzeKazEyzzjnwzzznyszgzzzwziyzjvvzjEnueOOdawzEnnwzEEnwwzEEnknEnB0JLJJ__OJ0K_JLK4K4_G8K4445K_48LK_OK4G44K4OKGF1TETamnMTOVc"
+		},
+		{
+			name: "South America", ...colorConf1,
+			data: "9mDS-FP-F--0TedPPOXo0HCGSpxrMptUSrUztztbbsUtaTTOzzzzStzSzSrSrSrppT-0btaOaNNUttVOa---56y6aOSrUaN5OzztztaOtTObtaNNUzaOSrSvHogmgfKpKSrCJgnIICMKrSryUWs--17XD--OaUzaOzyObzzztzrrUxUKprrzyUzzzzzzrSrrbzUSzyOaOsOzzzztbzzrAMSKzrUzzUSrUrrMKKSzzxrrxrxrrSrSrUSpMJnCKUV6aSxxUSxrSSMzzzWzz_zzzzzzxrUzxUzzrSzpxpxUSUxrxxSrrMSrSKKMKMSKKxrSKxzxpJmegnKzWzzoeepBpABgohBnBpMSKyOsT5T---OWWt_onKzzS9ehSrUzzzzrzzKKAILmfHnBpUztWsT0WaOaUzzzUrUrSzpxzzrSMSrzzzSKKKKpyTUaOzxzxrxxrxrUzzxzzzzzzzSrxrUrSrSzMSrSSrSrUprMKzUUUrbrbrbrrSMKxKKKpIKKKMKKKIBpKBnJnBhBgnCAIBnBnBnBgonIJoonIJnBnKBen17AKICIKKJgpKKCSSKKCKJpBpKIKBnKKKCACBpKMIKponBgfBnCHoonBnAKCKKCI9nBenBnBgmepCBn9cecegX-9eenHmognBmegefBnBenBnBenBgmonAKICCKKCKKKIKKJnCJnBmfBnBmpBnICIBpIBmpBmnBnABn8aObbaOa0bVOV1n9fCBonIHmonCMpQ9hCAJnJgnCBnBmpBpBgfA9nBmX9eeeXeXcXX9eee77gpKrSrzSrSrJnKKrrrrKJnCBnCBhCIBgemggeggef9eemmeecceAKKrKICJproomgmgeee9X9eXfKMSMAKMzrMyOtxrKCBe7VcfBprrBAIHnKhSKIBp9emgfBnCBpSMSUSxrrzzrKKLmnBmmnABpIKIBmgmnKSpSKUSrPkf9en9nAIKpIBgmXEV9gpB7Ve9VX9XbrUV1cc9V7Ws11chBeaN7tV7AIC7XN1N1777c2V-a5USy117aNN-ceef97Oa-Wzy1N-17WbyMMKSCKrs10WV-Ws978V-5-D5-s-7VcgmfMopCSppIA7XV--1-2bs717V15--a52aN-X1-cVN-X-V-ts-0V0VOV1OaOa1-2WV-sOV--7OV-V--VX-7--7-0yN7--7-X1OWa--1-0WVT--9N7OV--1-NN---V-17V-15Us--V--15NN7----VX1N7---X71--17eX7X7XX1VcX9XXcX9999A77eVeX9A17X9cX7X7X9cX7V7VV---717cV1717X717X-X7X71177X-X71N19--97X-X7-X7c-91X-X-7X7g7XVeX7Ws-177-17-5Oa5NOsOa5OaOV1XmX7eVcOV-95--5-sUWVNT5N--0WWtztaTT6WaOV7-0aOaOzza0aN0a--7VOV7s-s--6V-X---17X1Vc118V5OV7eX7XcXemnCCBfBnBoprSp9gn9cV17ee-9eee7eV4kDJ_aeiwn-FJ-u28mgpMSzsN-XeV5Fop6aeecBBk-F1t5Zdn9xxrs-9-O9QZyeevz-G3G-YcmK6CIIrUrrSrrrqOa9-X9X7X9cV1_beTuOPOPfznwwC3-4-Jh78rBeejprrSrNN--7-T5ITPw30U8E3BgonBzrtWzzaNVeeV8t9XtaOdOyzBwnEBKK-AmPDvCxrr-7X7ByJT4OdKaTizEydLQi_G48_OUdOvEvyuv-zyevvnzyBFzjvyBnzzznE0KKJJJK43JJG3JF0GKK-2BiSRpxxpWX7Xc"
+		},
+		{
+			name: "Asia", ...colorConf3,
+			data: "DgBy1vR-AV60YBnopk-O_9DCIs4rUUrSSMUrSrSSSMKzypKSSMRpKMSrUKMSpKSSrUrSKIKSueXgnCKBgme9XenIKKMBpSKpKMMxpLppKKpnBoopKMMMMKpMKKKKrSzzza55ObzzUUSxppppCCSSpSSrRopSrrSSSppMMSSrKSzUtpxrxxphSMUMUSrrUzzaOtbaOtbbbaOzWWaN5Os6yN-ee117eme97cX--1117XmmccVaN1-Xy-XD-NT-6sDOa0y-cWtzrrKrrSpptWSxs1W_rMUMMUTUUzrrrrSrSxKSrKKzKSrMSrxxprUUzUyTOa-N-1-X-7--1-VV1D-EUUaOtSs-SyMzy-Xe1XXe999XcefCIKKUUn7X7eXee8aOV11UUUa-X7X0Ss1N1mVcf9ecekgk1AJmnABgn99mn9hIJhKKMB7797ee17y17V79Ve79nFX8s19nAIKI1n9pMKKT5Jp-hFgV1goV1nIF-hB-1kOsN56rSpppMtVX-77c7a5N-D550V-ObbaTTN-OVa----N--7s50y0VTNN-9maOzV17cVeepABnBpKKCBnBoopIKMMS9pKKKKKKIBWV-D-XemgpKBe9gm9eOzbyOa5OWV15NN7-N--V5-OV55-50aOaOa----99e77X9e770V1OVX-ccefABn997Xc77VccgceXegfBnH7cegcVX9ecD-VV-7-XV7Xcs5OaUT155-51XD--UtyUy--zWzzUzrbzyMT5OtztyOaOzKpxxIKKKKpIKKSMIKSKKSzztzbyUxtaUaNN5OyKs-6V0WV0_y-SppSICMKMTTTOtQBpSCMSsSrMSzyTMSprSptSUbzzygfKxUaObrMJpTO_pmpUxraTTOtttVUtaSSptzIAK99eXegfKgpCLmpMrUSpz7fKBoohUttrSrUrrSrSAKKUUra4pSzbaNTObaUyUxopBpSrzbaOyN10baSrrpzKpSSUtSzpUs-75N7cc91cXoX7V7Ws1-5TUbaOaOaSySzzzrzzzUtaN0V971A9eenBeee7Xe9cgcfAA9gggnKJgpgeee9eA9mfBgf9geVVX9fB7X6baOTTNNOtaOty52tzVNN9m7Xcce9715N5ObKt_y-8rMbzs90My6_s4raOUxrrpUMrz_rCMUry-eXUzrpySrxyObrztrzUMUttpztrVMrzrMsURhUxpsOpCUbrzqmenMtzmpzb_mfKzpooXX1pBpxSSKpSMSMKKCMKQKnCBmmeXcc71171-V--XpIIKKnIAAIBnCMMCKprzWV7sObKKrKUMsNN5UyMzzrBpztttWVaTObW_xpI99ghKKMxztaUUbzzzMy6vBgnACUtz_yTMrUzbnIMUtttV-UrUSrSSprMSSMyOWVX-18a0a-0yTOa5NOzrrRoonBpSKBpCKCCKSnCCBhBmme7efMSUSzUUaOyT5OaN-0aUxpoopMSzTN99WbV2VVXX9eYV0WaN-V-OtvKKUSzMrs1797VtpzV6rrSSrzBhKCKMSrT-Wa-V0V-X77ca--UzzzyHpMT-yT-7-sOaObbyTTOzUtsUIMSpSRnMzMT0WsTOs97hIBeX-X7tVVtzVc8WWaUonMzbKUsTUbSxrnMUKBoonJnJgpBpBoptaNOttaT5NUxprCUT1-VObbzrUzzyTUzzzy2zSxxxzry-1-Wrbtbs9zbzV9UV19-fa-taTOpUWxMsN716aUKyUps0xzaNN0VOWbaUzSrzaMrzVcX155OVOV0ztby-199f1XOWa-N-TOWa5UaNUaOa5OaUtzxtaN7egYy-VTOaUrnMwnKtzxpzaICTmoomenCKS9e9hSKxzbrSrSKBgpMKrWs-_yTNMbMyTOzrJnHnKxrKpSMKMSpprKSSMU9fBopKKpcfKSMAIKSrUMMpSSrUzVbrMUUTMympKrSrUUzMBnKSKrSxpJpMrUSSpSKS97cXXXXcXXXX9997ccX7c7X7V11171N-V-VVX1-71117-7-X19997V1mopKrSxpMMKpPeVX7hJfKCCKMMMMMKKpprUa6BpepKAK8V1meommnKMPgpAACReonACBopKSIKMMCKKKKKRpKCKJoprUtbbSSUs4MtaT-78sUxzzwpxxpxrKKSSSUSpUSSSSSKKKSKKMKSKJpKKKIKKKJoopBn9mccgpKICAMIKKKrKCJnIIBopMMzxxrrSxxxrSpSMSpKABofBnBn97710VA112V1171mmgn9k7V51-7XecXpAHhAIBooo-X75NN-XeXnBnKIBnCCKBnB9gpKprryU_ppSzyOWVObrzyTShPfIBnCK9hKCCJpKzrzxprSrSSUrxxqeeehUxzUrrABnIBhMzsOxrxSmgpxnMHnHhMnMICHmpMnHhSyMBhLopC9fIMhBnBnCJommmfAA1nBo97c9nMMrFhBgnBehBgfABfIKSx9X17N1emXABf9gmnJepJmhRmopKCMSUSxrMSrrUSxrrxrSrSrMSSMKKppCKKRognBggogeefI9mpxrr9nBggoog7--N-e999fAa-XfJV17s7XA97XcgecWV7eeAJpKKJoopCKBpKKKrTTMMKSxRpKrSzrzxxrStSrUUUSSpLpCMSKMSzMSSRef7Xce7e9X997-cX9-c-777-11197VXX17X7cgc0V0VNN1VOV-1-WVV-77VcV71-V-71--AJVV7XhMCBmfBnC797g-ACI7-Oa--11-Vc-1XVX9979X17V1-VV7cec9oppnBn1gXo71oome-1nHmgfBpKIBgmmcenIBnBnBnAAAIA9mmonI9egoXmggopCMKKKLpQCIBoopKopJcgnIBp9fACJmge7X77VVa-11-V7-VVVX-V72V7-7-VVV11-V7----V---N78V5NN-V6s9XOy1cepgpQIA9f9e7X777VX7UTUbta1eekXX7X0VcX91c--g7-11emXceeXX9ee99ce9g7cX999XXXX99X7XV-5-V7ceeegeX7X977X77-X7XVV-5-1-7--ecD-9hBX99onAMSKIMJpKSpKrMKJhIMKopST-NOaOrRopIBfIMSSMzxzUpzUUaUaUbttyUaOhBpIJppMKprSxrUrrKMKprRnBn9ggnBms9gnICIK99efBomceXgnIBcXceeeXeefBp9emceececeegmeXXeekee9X9Xf9ecee7X7-5N-a-N--NOWVN--V-1-V1--5---711171--550aN5--0V1-V77-55---------N-7XOta6aN1ggnBmnI7VD-VNN--NN1ghKBpKIKKJpKIIKCKKKCKIKKRnBopKKrKSSIJpIIJoopCIJpKUKSMLpSKKIIJpKKMSnKrUSSppKpMSMKpSKrKp9eepUrpSSKpSprrrzzzSrrzzzrUrzxrUzUzUyTSxnICKCACCCBnABnBgnBmnABnCBnBgmnBgmmmgggggf9meemeXggf9mgemmmenAAABmmmmXhA7cgnIIAIBnBmhBnIBnKKSMSpgnCKRnKKMKKpKSprQMQCIKKCKMKCJpKKpMBohRmnABfB-1V9sQR73q09kCIBed989cCHZpMUMMSMSUOxbpy0bbxSraOaOc7TVP29C9Vc0VBecV--7NVV-N8H9w--c9BgrX-BVhQICKrSsV-1VkNB1Dn9choeAEHp9A9eAKKp9fCI9Xme118BgecX7IKKAKrJce70cXXXcXMSppCzSpJxSMKSKSSrk-0xpxxzba-17Oxta56paOsNNTOyTOa--USkWzMUUzs--VWbrxrrVV-d9e7VHsFGFpA9BnCzzII9X97pxS9XHVZoogqUtzqUyUxx50WsTOXmgcOuVOXc0T4CohpochopxzyN7X7NXV-cNWurX-AW_mQ9horyWa--D6JABqN-51WZ4aN79-1XOJ2Oc-58_IBN-i8hrCBfItza-V2Nd5onEIMLOs-X-0se3gprOX1V5NezHrS9eACprpxy0aN7cVV07h4Zpy1V3shEFnKMUrzcVN7I91V-chgRwP--Xvb6V37jO2mfSxrUba79cV3cjXTpJpJOyTOX7gc--1B70i-6Y102KttXe-4Y2-QBrWV-qBklBoptztf9-7-aBzewzzyPee--YGg2-DspvZoeeeXmeA9mgmogn9fSApra0tzWzy6tzzbzztza-e-1YR0fR--PDnihKtVX-SYi0nMS9VecnMSUzxc7UNN5eV4HE3LxHx9HfA9nBxpaX5TUbzUpKDNUKBh9e5BfCMSFT6zUbaOd9V0aP7OZecWV-dYlL2AAIBmcozMopohpzU---NOaOa6X97-LEHZBzbeV07yFszq9V-cz9FrX-4YxwbHc6s-9FJpByV0d0kXnUT7V--FTac-5FvBCV-XGFeBnEUa1-686HMnJmxCIATUpUzV5--57eV2t6dDnABplyUaN1c--GxMc-9HB5gtV38862nCBopa0taT7V0d8AyppN7-1THOURmocpAKpBc9zSMU0aN551-USL---WZbifBogn9ghCUrLTTTOyOWs7e7V08F5moo5-48NGSmzJmVCKK6ls-0V-1_meQFN19MIGBrKKKKopKzWaUbsX7X77-17c-1P80D09ablQKBxrSSMSxzUSpSrSrSprMMUSVVVVV0baXX997XX7ccXVX17X7c-DQ9vBxX-PblGIMMSrMMMkVVOte97eX7-DUDUCL1-0bwmfD-3c-SvC55-NcAPfppppSrSr1117X171-Ju42Zn9gmd9ceceAMSrSppKrSIBfrKCMUUKk-T9mcV5Ua5Ubz6tX--0aOa1X902cKbrCKKJpHpIJnIKBnCCBfBfEryOttVOu5OaTN5OX0a-7--1---cRyM--P9esnVneG9xnBmn9grKKJnIJpKSKMKJporUonHe2IBmmnCBpCKrSrKpppxrSzUzxxrV5-NNNOV-Ws-XV55UrSrxyOc775-7egoe50Wta7X777N--7VOxrSVWtbzUUSqV6bWaN19cVX99gecemd9ec1xdFn2SrJeCpKrMSrKpSKSKIKKIICCI9XKMKCMSII9comomnAABpCIJpBmrTObs0taT5OsNOzaUSKMUtV-0aXX0WxOzaOV0zr1750zrGWX--XVVV-77X7V0VV-117XXXcHX1V39Nu-nKrUUyP7X9XVFeTW0xrI997KBcXBgnCAJpta50aUpIIBnKSzba-0VVUzbqNX1c--dA_c19eGowgggnCSSGWWWbaUsUUUccee705ejHzrzUUyNA9eXeV19fFvonOaTX-Rf_UfKCBeISJxrT-0WbbVNXe--AcyX--Aenu-lfzAABeconJnUP5UrSpKIpxLV0zML5-V7--1X7-2gTJfAOV-AQx3k--sU3c1TvB1BnKCIKIKCpMSGzr-0VN--751-19-0iur2k0FkOrQBgceZgnKKMMKKSJmXxpSSprMs6rJnrUra5NX7-X10X0aOVN-1cV70c16258gfA9fJmnIMKxzyOaOs-NNNX-7lElAMryXe7-042oc-A4AKhN-7gKbcmpIrX6zrxrMzUVeVX-gocVXV-3MmVV-3NpHV4wNq3mmmrUUrMUTP77-X7--lazYV3RQ6imfrrSprs-1X9-7liMQEOxse70E6TIBmZxlxxKOa77VV0I6vXBefKMIM5Ota50cV-RW4Rw-0RW5cnK5--Om5EABpMKBhSxxs17-0V5X--H5H1-9mCaYBoxbaP70emCc2MSIBepJfIIBmVP7mnCIAACCKIlV50bxqUV6zxxpCKprzzaUKa577cWVNUrOtV17V17V7Xcc--HEP1-0mI5IF-0mLgQF-amT1YIBonIIICBgonGaOaNOWVNOWba-02AS3hKIKIJN0V-5--AByfCsV-BqE5k-6CtMgN-0D4wcDzDLQCCCBpIIAAUJmmfBnAAJonCBoomgggfABpAKCJeecme9IBnKKKrMJrSrzUSKpMKpzrtttbxpMbbqOaUwUxObzrrK6aTTTOa5550Vc155ObWaOs9--0WWbtzyNce9cc-Ne7Vcc90zbcV0ztte90byTOXeXeeeVNXeeV0RupTnClV-hngH2CCCCJpKKKppUUtzbta5-V777-X177XV1wx_ZnIKKaN-V-PnvrYCJooerSo-OzuXVTOV71MEjtggeeeggnIAACJoTUzrMUbbttyN-AEykhD--x0GZrsc-2FY2g-4o9gQCSX-CjFseBonHonBf9en9eegf9XfCIBfBpCKMMHhCCKpCKICIpOtzSMMKKIJxUbbs7VN1---VV5ObbxrKCESzUpISy0bbbse1cX5-XVcXeV6y6aTNNNfBmehCCBee19cVV-0a6bzttyUyTUtzwUtttaNNOWV-1oImQL--AGQ0CNV-x5IkxkV0IIIYXm2V7XXeyUta5UV-46fyV0C78BrT7V0S83qnAyP2IoidnCSprrSxrSzrUMSxpMxzUUSSMMMMSzSSrrSprMSpMSSxrSxxxprrrrrUrxrSUUbtaUUL----WX-5N97X9emVP97719ecX-0aNcgmme6a9eX7199e77gecVX7cXXXXXcXX77X7X9egeeXX9-2oitACsV0hAoJnEbsc1EIX0Bgeen9gf9rSaOzzWyUrzqNX9-0CE-XnxVV-4FqeV0SGIunObe-1p622T7-0JRDc-0JfGc-vK0CgggrUzaT19V-CLDDs-6Ku0CV-ALMbENV-COvBk-bLoRjSrR-cX-8pp72IJoOWV--4T3HV-STYBq--hTbPoN-6pzxnBpT0X-5q4TfCGaNV-xXFHpN7-6N_hh--2NfsB-NqBUQHeCCtzSSSzT1cX11-1CZ-NpprX17-7qMXnCMyN7c-IOb-BnaN-0Owzc2fPAlBgggf9fAHoonAABgnCKCbbaT5OWaOaTOtbaTTOaN-0PiN7-MPkJBf6tV-4fLuV-SgO9lV-phLT7tV-4gqNV-4hl5V3xiFwnA9nAROzqOaOXV-SifanVGKwWFOaOV6zzzzUUy6tztbKta56s-WrzzsN-5T4rKpppSKSKKKM-6Sk2RmmeXgeggnTUbxyTUbyOe-OMnm0a50aOV-NNOyNOxtyN-fRZugenzttuc6MRg2gooef9eemeX7XeeeA9Y9BehCIUzrMUzzbrxzttzztzUzrzqUzzbzzzbbzrzzV-9fA9eeX0XeBeeY9e7-DrA8vSzrOtaXeec-0S7u7-rS8wBhCUbttcec-bSGCgnCzaN9-BrL6QBezxyTPXV4hpYLmgfCtzxzSttX9ce-"
+		},
+	];
+
+	const colors = ["#acacac", "#900000", "#008000", "#000090", "#808000", "#800080", "#008080", "#c4c4c4", "#000000"];
+
+	let width, height, steps;
+
+	function f_jr(pos, dir, type, isRightTurn, target) {
+		dir = getNeighbour(pos, dir + 1 + 2 * isRightTurn & 3);
+		if (!function (var_f, var_g) {
+			return 1 < Math.abs(var_f % width - var_g % width) || 1 < Math.abs(f_jw(var_f) - f_jw(var_g))
+		}(pos, dir) && 0 === target[dir << 2]) target[dir << 2] = type
+	}
+
+	function f_jw(var_a) {
+		return Math.floor((var_a + .5) / width) % height
+	}
+
+	function getNeighbour(pos, dir) {
+		return pos + steps[dir]
+	}
+
+	const stringConvertor = new StringConvertor;
+
+	function StringConvertor() {
+		var minCharCodes, maxCharCodes, charCodeOffset;
+		minCharCodes = [32, 65, 191, 913, 931];
+		maxCharCodes = [64, 127, 688, 930, 1155];
+		charCodeOffset = new Array(minCharCodes.length + 1);
+		for (var currentOffset = 0; currentOffset < charCodeOffset.length; currentOffset++) {
+			charCodeOffset[currentOffset] = 0;
+			for (var otherOffset = currentOffset - 1; 0 <= otherOffset; otherOffset--) charCodeOffset[currentOffset] += maxCharCodes[otherOffset] - minCharCodes[otherOffset]
+		}
+
+		this.fromEncodedArray = function (array) {
+			for (var char, group, result = "", length = array.length, i = 0; i < length; i++) for (group = 1; group < charCodeOffset.length; group++) if (array[i] < charCodeOffset[group]) {
+				char = minCharCodes[group - 1] + array[i] - charCodeOffset[group - 1];
+				result += String.fromCharCode(char);
+				break
+			}
+			return result
+		};
+	}
+
+	const reader = new Reader;
+
+	function Reader() {
+		this.length = 0;
+		this.offset = 0;
+		this.data = null;
+		this.init = function (data) {
+			this.offset = 0;
+			this.data = data;
+			this.length = data.length
+		};
+		this.readBits = function (length) {
+			let value = 0, data = this.data, max = this.offset + length - 1, i = this.offset;
+			for (; i <= max; i++) value |= (data[i >> 3] >> 7 - (7 & i) & 1) << max - i;
+			this.offset += length;
+			this.offset > 8 * this.length && console.log("error unwrapper");
+			return value;
+		};
+	}
+
+	const stringDecoder = new StringDecoder;
+
+	function StringDecoder() {
+		const mapping = new Uint8Array(78);
+		let i;
+		mapping[50] = 37;
+		for (i = 0; i < 10; i++) mapping[i + 3] = i + 1;
+		for (i = 0; i < 26; i++) mapping[i + 20] = i + 11, mapping[i + 52] = i + 38
+		this.fromString = function (string, lengthOverwrite) {
+			let length = string.length;
+			let result = new Uint8Array(lengthOverwrite || length);
+			let i = 0;
+			for (; i < length; i++) result[i] = mapping[string.charCodeAt(i) - 45];
+			return result
+		};
+		this.fromMinifiedArray = function (array) {
+			let i, length = array.length;
+			writer.forSize(6 * length);
+			for (i = 0; i < length; i++) writer.writeBits(6, array[i]);
+			reader.init(writer.data)
+		}
+	}
+
+	const writer = new Writer;
+	function Writer() {
+		this.length = 0;
+		this.offset = 0;
+		this.data = null;
+		this.init = function (data) {
+			this.offset = 0;
+			this.data = data;
+			this.length = data.length
+		};
+		this.forSize = function (size) {
+			this.init(new Uint8Array(this.getNeededSize(size)));
+			return this.data;
+		};
+		this.writeBits = function (length, value) {
+			let data = this.data, max = this.offset + length - 1, i = this.offset;
+			for (; i <= max; i++) data[i >> 3] |= (value >> max - i & 1) << 7 - (7 & i);
+			this.offset += length;
+			this.offset > 8 * this.length && console.log("error wrapper")
+		};
+		this.getNeededSize = function (var_a) {
+			return var_a + 7 >> 3
+		};
+	}
+
+	function getNeededBits(neededValues) {
+		return Math.floor(!!neededValues * (1 + Math.log2(neededValues + .5)))
+	}
+
+	function loadStaticMap(map) {
+		let data = map.data;
+		let i, sectionLength, max, positionLength;
+		stringDecoder.fromMinifiedArray(stringDecoder.fromString(data));
+		width = reader.readBits(12);
+		height = reader.readBits(12);
+		steps = [-width, -1, width, 1];
+		canvas.width = width;
+		canvas.height = height;
+		const ctx = canvas.getContext("2d", {alpha: false});
+		const imgData = ctx.getImageData(0, 0, width, height);
+		const g_w8 = imgData.data;
+		for(var fx = 0; fx < g_w8.length; fx++) fx % 4 === 3 || (g_w8[fx] = 0);
+		max = reader.readBits(12);
+		sectionLength = reader.readBits(5);
+		positionLength = getNeededBits(width * height - 1);
+		for (i = 0; i < max; i++) !function (length, pos, isLand, isRight) {
+			var j, dir, mapDataTarget = g_w8, y = pos, z = pos, lastDir = 0, targetType = 1 + isLand, targetOpposite = 2 - isLand;
+			mapDataTarget[pos << 2] = targetType;
+			for (j = 0; j < length; j++) dir = reader.readBits(2), pos = getNeighbour(pos, dir), mapDataTarget[pos << 2] === targetType ? lastDir % 2 == 1 && f_jr(z, lastDir + 2 * isRight + 3, targetOpposite, isRight, mapDataTarget) : mapDataTarget[pos << 2] = targetType, f_jr(pos, dir, targetOpposite, isRight, mapDataTarget), f_jr(z, dir, targetOpposite, isRight, mapDataTarget), z = pos, lastDir = dir;
+			if (getNeighbour(pos, 0) === y) {
+				f_jr(pos, 0, targetOpposite, isRight, mapDataTarget);
+				f_jr(y, 0, targetOpposite, isRight, mapDataTarget)
+			} else if (getNeighbour(pos, 1) === y) {
+				f_jr(pos, 0, targetOpposite, isRight, mapDataTarget);
+				f_jr(y, 2, targetOpposite, isRight, mapDataTarget)
+			}
+			if (0 === length) {
+				f_jr(y, 0, targetOpposite, isRight, mapDataTarget);
+				f_jr(y, 2, targetOpposite, isRight, mapDataTarget)
+			}
+		}(reader.readBits(sectionLength), reader.readBits(positionLength), 1 === reader.readBits(1), 1 === reader.readBits(1));
+		let g, h, k, l, m, n, o = g_w8, p = true, q = map.landColor, r = map.waterColor;
+		for (h = 0; h < height; h++) for (l = true, m = p, g = n = 0; g < width; g++) k = 4 * h * width + 4 * g, n <= g && 0 < o[k] && (m = 2 === o[k], l) && (l = false, m !== p) ? (p = m, n = g + 1, g = -1) : (m ? (o[k] = r[0], o[1 + k] = r[1], o[2 + k] = r[2]) : (o[k] = q[0], o[1 + k] = q[1], o[2 + k] = q[2]), o[3 + k] = 255);
+		ctx.putImageData(imgData, 0, 0);
+		if (sizeXInput.original === -1) {
+			sizeXInput.original = width;
+			sizeYInput.original = height;
+			sizeXInput.value = width;
+			sizeYInput.value = height;
+			landTargetColor.value = landColor.value = "#" + (q[0] << 16 | q[1] << 8 | q[2]).toString(16).padStart(6, "0");
+			waterTargetColor.value = waterColor.value = "#" + (r[0] << 16 | r[1] << 8 | r[2]).toString(16).padStart(6, "0");
+			mountainTargetColor.value = mountainColor.value = "#000000";
+			updateNormalizer();
+		}
+		polishMap(map, ctx, width, height).then(imgData => {
+			scaleMap(imgData);
+			finishMapLoad();
+		});
+	}
+
+	async function polishMap(map, ctx, mapWidth, mapHeight) {
+		return new Promise(async (resolve, reject) => {
+			const data = map.glow;
+			const imgData = ctx.getImageData(0, 0, mapWidth, mapHeight);
+			const pixels = imgData.data;
+			this.a0q = true
+			this.aB = 0
+			this.a0o = [map.landColor[0], map.waterColor[0]]
+			this.pw = [data[3], data[4], data[5], data[6]]
+			this.a0k = data[7]
+			this.a0l = data[8]
+			this.a0m = data[9]
+			this.a0n = data[10]
+			const rand = new Random();
+			rand.init(data[2]);
+			const noise = await (new NoiseGenerator()).generate(mapWidth, mapHeight, data[0], data[1], rand);
+			await new Promise(resolve => setTimeout(resolve, 0));
+			this.aB++;
+			let startTick = currentProcess = Date.now();
+			for (var pixelIndex, index, y = 1; y < mapHeight - 2; y++) {
+				for (var x = 1; x < mapWidth - 1; x++) {
+					if (Date.now() - startTick > 200) {
+						setLoad("Polishing (1/2)... " + Math.floor(((y * mapWidth + x) / (mapWidth * mapHeight)) * 100) + "%");
+						await new Promise(resolve => setTimeout(resolve, 0));
+						if (!checkProcessStart(startTick)) {
+							reject();
+							return;
+						}
+						startTick = currentProcess = Date.now();
+					}
+					index = x + y * mapWidth;
+					pixelIndex = 4 * index;
+					if (checkPixel(pixels, pixelIndex)) {
+						const b = Math.floor(map.waterColor[0] + data[4] * noise[index] / 1E4) - pixels[pixelIndex];
+						0 < b && (pixels[pixelIndex] += b, pixels[pixelIndex + 1] += b, pixels[pixelIndex + 2] += b)
+					} else {
+						const b = Math.floor(map.landColor[0] + data[3] * noise[index] / 1E4) - pixels[pixelIndex];
+						0 < b && (pixels[pixelIndex] += b, pixels[pixelIndex + 1] += b, pixels[pixelIndex + 2] += b)
+					}
+				}
+			}
+			ctx.putImageData(imgData, 0, 0, 1, 1, mapWidth - 2, mapHeight - 2);
+			await new Promise(resolve => setTimeout(resolve, 0));
+			if (!checkProcessStart(startTick)) {
+				reject();
+				return;
+			}
+			startTick = currentProcess = Date.now();
+			for (pixelIndex, index, y = 1; y < mapHeight - 2; y++) {
+				for (x = 1; x < mapWidth - 1; x++) {
+					index = x + y * mapWidth;
+					if (Date.now() - startTick > 200) {
+						setLoad("Polishing (2/2)... " + Math.floor((index / (mapWidth * mapHeight)) * 100) + "%");
+						await new Promise(resolve => setTimeout(resolve, 0));
+						if (!checkProcessStart(startTick)) {
+							reject();
+							return;
+						}
+						startTick = currentProcess = Date.now();
+					}
+					pixelIndex = 4 * index;
+					if (!checkPixel(pixels, pixelIndex)) {
+						if (1 < x && checkPixel(pixels, pixelIndex - 4) || x < mapWidth - 2 && checkPixel(pixels, pixelIndex + 4) || 1 < y && checkPixel(pixels, pixelIndex - 4 * mapWidth) || y < mapHeight - 2 && checkPixel(pixels, pixelIndex + 4 * mapWidth)) {
+							var c = x - this.a0l;
+							var d = y - this.a0l;
+							var e = x + this.a0l, f = y + this.a0l;
+							c = 1 > c ? 1 : c;
+							e = e > mapWidth - 2 ? mapWidth - 2 : e;
+							f = f > mapHeight - 2 ? mapHeight - 2 : f;
+							for (var g = 1 > d ? 1 : d; g <= f; g++) {
+								for (var h = c; h <= e; h++) {
+									if (d = 4 * (h + g * mapWidth), checkPixel(pixels, d)) {
+										var i = this.a0k + (this.a0l - this.a0k) * noise[h + mapWidth * g] / 1E4;
+										if (!(Math.abs(x - h) > i || Math.abs(y - g) > i)) {
+											var j = Math.sqrt((x - h) * (x - h) + (y - g) * (y - g));
+											if (j < i) {
+												const b = Math.floor(this.a0o[1] + (1 - j / i) * this.pw[3]) - pixels[d]
+												0 < b && (pixels[d] += b, pixels[d + 1] += b, pixels[d + 2] += b)
+											}
+										}
+									} else {
+										i = this.a0m + (this.a0n - this.a0m) * noise[h + mapWidth * g] / 1E4;
+										if (!(Math.abs(x - h) > i || Math.abs(y - g) > i)) {
+											j = Math.sqrt((x - h) * (x - h) + (y - g) * (y - g));
+											if (j < i) {
+												const b = Math.floor(this.a0o[0] + (1 - j / i) * this.pw[2]) - pixels[d]
+												0 < b && (pixels[d] += b, pixels[d + 1] += b, pixels[d + 2] += b)
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			ctx.putImageData(imgData, 0, 0, 1, 1, mapWidth - 2, mapHeight - 2);
+			unsetLoad();
+			if (!checkProcessStart(startTick)) {
+				reject();
+				return;
+			}
+			resolve(imgData);
+		});
+	}
+
+	function checkPixel(pixels, pixelIndex) {
+		return pixels[pixelIndex + 2] > pixels[pixelIndex] && pixels[pixelIndex + 2] > pixels[pixelIndex + 1]
+	}
+
+	function Random() {
+		var seed, values;
+		this.init = function (s) {
+			values = Array(101);
+			for (var i = values.length - 1; 0 <= i; i--) values[i] = Math.floor(32768 * i / 100);
+			seed = 2 * s % 32768 + 1;
+		};
+		this.value = function (key) {
+			return values[key]
+		};
+		this.staticRandom = function () {
+			return Math.floor(seed - 1 / 2)
+		};
+		this.random = function () {
+			return seed = 167 * seed % 32768
+		};
+		this.seededRandom = function (s) {
+			return Math.floor(s * this.random() / 32768)
+		};
+	}
+
+	function NoiseGenerator() {
+		function f_g(start, change, amount) {
+			row[0] = start;
+			for (var i = 1; i < amount; i++) row[i] = row[i - 1] + change, 1E4 <= row[i] ? (row[i] = 9999, change = -change) : 0 > row[i] ? (row[i] = 0, change = -change) : (change += 16384 <= randomValueGenerator.random() ? changeAmplifier : -changeAmplifier, change = change < -maxChange ? -maxChange : change > maxChange ? maxChange : change)
+		}
+
+		function f_k_a(x, y, amount) {
+			for (var i = 0; i < amount; i++) noise[y * width + x + i] = row[i];
+			done += amount;
+		}
+
+		function f_k_b(x, y, amount) {
+			for (var i = 0; i < amount; i++) noise[y * width + x + i * width] = row[i]
+			done += amount;
+		}
+
+		function f_y(prev, index) {
+			var diff = prev - row[index];
+			if (0 !== diff) {
+				var d = 1 + Math.floor(Math.abs(diff) / index);
+				d = 0 > diff ? -d : d;
+				row[index] = prev;
+				var e = index - Math.floor(Math.abs(diff) / Math.abs(d));
+				e = 1 > e ? 1 : e > index - 1 ? index - 1 : e;
+				for (var f = index - 1; f >= e; f--) row[f] += diff - (index - f) * d;
+				if (0 > diff) for (diff = index - 1; 1 <= diff; diff--) 0 > row[diff] && (row[diff] = -row[diff] - 1); else for (diff = index - 1; 1 <= diff; diff--) 1E4 <= row[diff] && (row[diff] = 2E4 - row[diff] - 1)
+			}
+		}
+
+		var noise, width, maxSize, maxChange, changeAmplifier, row, g_G, g_F, g_K, columnsDone, rowsDone, xStart, yStart, randomValueGenerator, done;
+		this.generate = async function (widthArg, height, maxChangeArg, changeAmplifierArg, rand) {
+			currentProcess = this;
+			maxChange = maxChangeArg;
+			changeAmplifier = changeAmplifierArg;
+			width = widthArg;
+			randomValueGenerator = rand;
+			noise = new Int16Array(width * height);
+			maxSize = width > height ? width : height;
+			row = new Int16Array(maxSize);
+			g_G = [];
+			g_F = [];
+			g_K = [];
+			columnsDone = Array(width);
+			rowsDone = Array(height);
+			for (var i = width - 1; 0 <= i; i--) columnsDone[i] = false;
+			for (i = height - 1; 0 <= i; i--) rowsDone[i] = false;
+			xStart = new Int16Array(width);
+			yStart = new Int16Array(height);
+
+			//init horizontal line
+			f_g(randomValueGenerator.random() % 1E4, randomValueGenerator.random() % (2 * maxChange + 1) - maxChange, maxSize);
+			for (i = 0; i < height - 1; i++) yStart[i] = row[i + 1] - row[i];
+			yStart[height - 1] = yStart[height - 3];
+			f_k_a(0, 0, width);
+
+			//init vertical line
+			f_g(noise[0], randomValueGenerator.random() % (2 * maxChange + 1) - maxChange, maxSize);
+			for (i = 0; i < width - 1; i++) xStart[i] = row[i + 1] - row[i];
+			xStart[width - 1] = xStart[width - 3];
+			f_k_b(0, 0, height);
+
+			var d, a, b, c;
+			f_g(noise[width - 1], xStart[width - 1], height);
+			f_k_b(width - 1, 0, height);
+
+			f_g(noise[width * (height - 1)], yStart[height - 1], width);
+			f_y(noise[width * height - 1], width - 1);
+			f_k_a(0, height - 1, width);
+
+			columnsDone[width - 1] = columnsDone[0] = true;
+			rowsDone[height - 1] = rowsDone[0] = true;
+			a = width;
+			g_G.push(0);
+			g_F.push(a);
+			g_K.push(true);
+			a = height;
+			g_G.push(0);
+			g_F.push(a);
+			g_K.push(false);
+			done = 0;
+			return new Promise(async (resolve, reject) => {
+				let startTick = Date.now();
+				for (; ;) {
+					if (Date.now() - startTick > 200) {
+						setLoad("Noise... " + Math.floor((done / (width * height)) * 100) + "%");
+						await new Promise(resolve => setTimeout(resolve, 0));
+						startTick = Date.now();
+						if (!checkProcessStart(this)) {
+							reject();
+							return;
+						}
+					}
+					a = g_G.length - 1;
+					for (b = a - 1; 0 <= b; b--) g_F[b] > g_F[a] && (a = b);
+					if (5 > g_F[a]) break;
+					b = g_G[a] + Math.floor(g_F[a] / 2);
+					if (g_K[a]) {
+						c = void 0;
+						var e;
+						d = b;
+						for (var f = 0, g = 0; g < height - 1;) {
+							for (e = f + 1; e < height; e++) if (rowsDone[e]) {
+								g = e;
+								break
+							}
+							e = g - f + 1;
+							f_g(noise[d + width * f], 0 === f ? xStart[d] : row[c - 1] - row[c - 2], e);
+							f_y(noise[g * width + d], e - 1);
+							f_k_b(d, f, e);
+							c = e;
+							f = g
+						}
+						columnsDone[d] = true
+					} else {
+						c = void 0;
+						d = b;
+						for (g = f = 0; g < width - 1;) {
+							for (e = f + 1; e < width; e++) if (columnsDone[e]) {
+								g = e;
+								break
+							}
+							e = g - f + 1;
+							f_g(noise[d * width + f], 0 === f ? yStart[d] : row[c - 1] - row[c - 2], e);
+							f_y(noise[d * width + g], e - 1);
+							f_k_a(f, d, e);
+							c = e;
+							f = g
+						}
+						rowsDone[d] = true
+					}
+					c = g_G[a] + g_F[a] - b;
+					d = g_K[a];
+					g_G.push(b);
+					g_F.push(c);
+					g_K.push(d);
+					g_F[a] = b - g_G[a] + 1
+				}
+				for (a = 0; a < width; a++) if (!columnsDone[a]) for (b = 0; b < height; b++) rowsDone[b] || (c = noise[b * width + a - 1] + noise[(b - 1) * width + a], d = 2, columnsDone[a + 1] && (d++, c += noise[b * width + a + 1]), rowsDone[b + 1] && (d++, c += noise[(b + 1) * width + a]), noise[b * width + a] = Math.floor(c / d))
+				unsetLoad();
+				if (!checkProcessStart(this)) {
+					reject();
+					return;
+				}
+				resolve(noise);
+			});
+		};
+	}
+
+	async function generateMap(map) {
+		const rand = new Random();
+		rand.init(map.seed);
+		const noise = await (new NoiseGenerator()).generate(map.width, map.height, map.g7, map.g4, rand);
+		await new Promise(resolve => setTimeout(resolve, 0));
+		if (map.h1) {
+			var a = [map.width / 2];
+			var b = [map.height / 2];
+			var c = [...map.h1];
+			var d = [...map.h2];
+			var f, g, h, i = a.length - 1, j = map.width + map.height;
+			j *= j;
+			var k = c.length;
+			for (f = k - 1; 0 <= f; f--) c[f] *= c[f];
+			var l = Array(k), m = Array(k), n = Array(k);
+			var e = Array(k)
+			for (f = k - 1; 0 <= f; f--) e[f] = 0;
+			for (f = 1; f < k; f++) l[f] = c[f] - c[f - 1], m[f] = d[f] - d[f - 1], n[f] = e[f] - e[f - 1];
+			for (g = map.width - 1; 0 <= g; g--) for (h = map.height - 1; 0 <= h; h--) {
+				var p = j;
+				for (f = i; 0 <= f; f--) {
+					var q = (g - a[f]) * (g - a[f]) + (h - b[f]) * (h - b[f]);
+					p = q < p ? q : p
+				}
+				q = d[k - 1];
+				var r = e[k - 1];
+				for (f = 1; f < k; f++) if (p < c[f]) {
+					q = d[f - 1] + divideNegative((p - c[f - 1]) * m[f], l[f]);
+					r = e[f - 1] + divideNegative((p - c[f - 1]) * n[f], l[f]);
+					break
+				}
+				var z = map.width * h + g;
+				500 > q ? noise[z] = Math.floor(noise[z] * q * 2 / 1E3) : 500 < q && (noise[z] += Math.floor(2 * (1E4 - noise[z]) * (q - 500) / 1E3));
+				noise[z] += Math.floor(r * (10 * q - noise[z]) / 1E3)
+			}
+		}
+
+		canvas.width = map.width;
+		canvas.height = map.height;
+		const ctx = canvas.getContext("2d", {alpha: false});
+		const imgData = ctx.getImageData(0, 0, map.width, map.height);
+		let pixels = imgData.data;
+		b = map.bt, c = map.ez, d = map.mm, e = map.ce, f, g, i = b.length - 2, j = Array(i + 1), k = Array(i + 1), l = Array(i + 1), m = Array(i + 1);
+		let startTick = currentProcess = Date.now();
+		for (g = i; 0 <= g; g--) j[g] = b[g + 1] - b[g], k[g] = c[g + 1] - c[g], l[g] = d[g + 1] - d[g], m[g] = e[g + 1] - e[g];
+		for (f = map.width * map.height - 1; 0 <= f; f--) for (g = i; 0 <= g; g--) if (noise[f] >= b[g]) {
+			if (Date.now() - startTick > 200) {
+				setLoad("Generating... " + Math.floor(100 - (f / (map.width * map.height)) * 100) + "%");
+				await new Promise(resolve => setTimeout(resolve, 0));
+				if (!checkProcessStart(startTick)) {
+					return;
+				}
+				startTick = currentProcess = Date.now();
+			}
+			n = noise[f] - b[g];
+			pixels[4 * f] = c[g] + divideNegative(k[g] * n, j[g]);
+			pixels[4 * f + 1] = d[g] + divideNegative(l[g] * n, j[g]);
+			pixels[4 * f + 2] = e[g] + divideNegative(m[g] * n, j[g]);
+			pixels[4 * f + 3] = 255;
+			break
+		}
+		ctx.putImageData(imgData, 0, 0);
+		unsetLoad();
+		finishMapLoad();
+	}
+
+	function divideNegative(a, b) {
+		return 0 <= a ? Math.floor(a / b) : -Math.floor(-a / b)
+	}
+
+	//End of Territorial.io code
+
+	for (let i = 0; i < defaultData.length; i++) {
+		const option = document.createElement("option");
+		option.value = i.toString();
+		option.innerText = defaultData[i].name;
+		mapSelector.appendChild(option);
+	}
+
+	const sizeXInput = document.getElementById("sizeXInput");
+	const sizeYInput = document.getElementById("sizeYInput");
+
+	const landColor = document.getElementById("landColor");
+	const landTargetColor = document.getElementById("landTargetColor");
+	const waterColor = document.getElementById("waterColor");
+	const waterTargetColor = document.getElementById("waterTargetColor");
+	const mountainColor = document.getElementById("mountainColor");
+	const mountainTargetColor = document.getElementById("mountainTargetColor");
+	let normalizeLand = false, normalizeWater = false, normalizeMountains = false;
+
+	function loadMap(index, seed) {
+		const map = {...defaultData[index]};
+		if (!mapInput || (mapInput.type !== "preset" || mapInput.index !== index)) {
+			mapInput = {type: "preset", index: index};
+			if (map.width) {
+				sizeXInput.value = map.width;
+				sizeYInput.value = map.height;
+				sizeXInput.original = map.width;
+				sizeYInput.original = map.height;
+				updateNormalizer()
+			} else {
+				sizeXInput.original = -1;
+			}
+		}
+		if (index === 1) seed = defaultData[1].seed;
+		map.seed = seed;
+		map.width = parseInt(sizeXInput.value);
+		map.height = parseInt(sizeYInput.value);
+		map.data ? loadStaticMap(map) : generateMap(map);
+	}
+
+	function finishMapLoad() {
+		document.getElementById("edits").classList.remove("d-none");
+		sizeXInput.value = canvas.width;
+		sizeYInput.value = canvas.height;
+		canvas.style.width = canvas.parentElement.getBoundingClientRect().width + "px";
+		canvas.style.height = canvas.parentElement.getBoundingClientRect().height + "px";
+		canvas.classList.remove("d-none");
+		overlay.classList.remove("d-none");
+		updateSpawnOverlay();
+		updateSpawnOverlay();
+	}
+
+	function applyMapChanges() {
+		currentProcess = null;
+		unsetLoad();
+		if (!mapInput) return;
+		if (mapInput.type === "preset") {
+			loadMap(mapInput.index, seedInput.value);
+		} else if (mapInput.type === "image") {
+			canvas.width = sizeXInput.original;
+			canvas.height = sizeYInput.original;
+			const ctx = canvas.getContext("2d");
+			ctx.putImageData(mapInput.data, 0, 0);
+			scaleMap(mapInput.data);
+			if (!currentPicker && (normalizeLand || normalizeWater || normalizeMountains)) {
+				normalizeMap(normalizeLand, normalizeWater, normalizeMountains);
+			}
+			finishMapLoad();
+		}
+	}
+
+	const seedInput = document.getElementById("seedInput");
+	const spawnSeedInput = document.getElementById("spawnSeed");
+	seedInput.value = spawnSeedInput.value = 14071;
+	mapSelector.value = "2";
+	document.getElementById("random").onclick = () => {
+		seedInput.value = Math.floor((Math.random() * 1E5) % 16383);
+		if (spawnLink) spawnSeedInput.value = seedInput.value;
+		applyMapChanges();
+	};
+	document.getElementById("spawnRandom").onclick = () => {
+		if (spawnLink) return;
+		spawnSeedInput.value = Math.floor((Math.random() * 1E5) % 16383);
+	};
+	mapSelector.onchange = function () {
+		loadMap(parseInt(this.value), seedInput.value);
+		preview.classList.add("d-none");
+		fileDesc.classList.remove("d-none");
+		fileDesc.innerText = "Upload or Drop an Image here";
+		fileDesc.classList.remove("text-danger");
+	}
+	seedInput.oninput = function () {
+		if (spawnLink) spawnSeedInput.value = this.value;
+		applyMapChanges();
+	}
+	mapSelector.onchange(undefined);
+
+	let linked = true;
+	document.getElementById("link").onclick = function () {
+		linked = !linked;
+		this.innerHTML = `<i class='fas ${linked ? "fa-link" : "fa-link-slash"}'></i>`;
+	}
+	let spawnLink = true;
+	document.getElementById("spawnLink").onclick = function () {
+		spawnLink = !spawnLink;
+		this.innerHTML = `<i class='fas ${spawnLink ? "fa-link" : "fa-link-slash"}'></i>`;
+		document.getElementById("spawnRandom").style.opacity = spawnLink ? "0.5" : "1";
+		if (spawnLink) {
+			spawnSeedInput.value = seedInput.value;
+		}
+	}
+	sizeXInput.oninput = sizeYInput.oninput = function () {
+		sizeXInput.value = Math.max(1, Math.min(parseInt(sizeXInput.value), 4096));
+		sizeYInput.value = Math.max(1, Math.min(parseInt(sizeYInput.value), 4096));
+		if (isNaN(sizeXInput.value)) sizeXInput.value = 0;
+		if (isNaN(sizeYInput.value)) sizeYInput.value = 0;
+		if (linked) {
+			if (this === sizeXInput) {
+				sizeYInput.value = Math.floor(sizeXInput.value * sizeYInput.original / sizeXInput.original);
+			} else {
+				sizeXInput.value = Math.floor(sizeYInput.value * sizeXInput.original / sizeYInput.original);
+			}
+		}
+		sizeXInput.value > 0 && sizeYInput.value > 0 && applyMapChanges();
+		if (sizeXInput.value === "0") sizeXInput.value = "";
+		if (sizeYInput.value === "0") sizeYInput.value = "";
+	}
+
+	function scaleMap(imgData) {
+		const newCanvas = document.createElement("canvas");
+		newCanvas.width = canvas.width;
+		newCanvas.height = canvas.height;
+		const newCtx = newCanvas.getContext("2d");
+		newCtx.putImageData(imgData, 0, 0);
+		canvas.width = sizeXInput.value;
+		canvas.height = sizeYInput.value;
+		const ctx = canvas.getContext("2d");
+		ctx.drawImage(newCanvas, 1, 1, newCanvas.width - 2, newCanvas.height - 2, 0, 0, canvas.width, canvas.height);
+	}
+
+	document.getElementById("normalizeLand").onclick = function () {
+		if (mapInput.type === "preset") return;
+		normalizeLand = !normalizeLand;
+		this.innerHTML = `<i class='fas ${normalizeLand ? "fa-check" : "fa-xmark"}'></i>`;
+		applyMapChanges();
+	}
+	document.getElementById("normalizeWater").onclick = function () {
+		if (mapInput.type === "preset") return;
+		normalizeWater = !normalizeWater;
+		this.innerHTML = `<i class='fas ${normalizeWater ? "fa-check" : "fa-xmark"}'></i>`;
+		applyMapChanges();
+	}
+	document.getElementById("normalizeMountains").onclick = function () {
+		if (mapInput.type === "preset") return;
+		normalizeMountains = !normalizeMountains;
+		this.innerHTML = `<i class='fas ${normalizeMountains ? "fa-check" : "fa-xmark"}'></i>`;
+		applyMapChanges();
+	}
+	landColor.onclick = waterColor.onclick = mountainColor.onclick = function () {
+		if (mapInput.type === "preset") return;
+		const picker = document.createElement("input");
+		picker.type = "color";
+		picker.value = this.value;
+		picker.style.display = "none";
+		const parent = this;
+		picker.onchange = function () {
+			parent.value = this.value;
+			updateNormalizer();
+			applyMapChanges();
+		}
+		document.body.appendChild(picker);
+		picker.click();
+	}
+	let currentPicker = null;
+	landTargetColor.onclick = waterTargetColor.onclick = mountainTargetColor.onclick = function () {
+		if (mapInput.type === "preset") return;
+		var cvas = document.createElement("canvas");
+		cvas.width = 24;
+		cvas.height = 24;
+		var ctx = cvas.getContext("2d");
+		const font = "900 24px " + getComputedStyle(document.body).getPropertyValue("--fa-style-family-classic");
+		document.fonts.load(font).then(() => {
+			ctx.font = font;
+			ctx.fillStyle = "#FF0000";
+			ctx.textAlign = "center";
+			ctx.textBaseline = "middle";
+			ctx.fillText("\uf00d", 12, 12);
+			document.body.style.cursor = `url(${(cvas.toDataURL('image/png'))}) 12 12, auto`;
+
+			ctx.clearRect(0, 0, cvas.width, cvas.height);
+			ctx.fillStyle = getComputedStyle(document.body).getPropertyValue("--bs-body-color");
+			ctx.textAlign = "center";
+			ctx.textBaseline = "middle";
+			ctx.fillText("\uf1fb", 12, 12);
+			canvas.style.cursor = `url(${(cvas.toDataURL('image/png'))}) 0 24, auto`;
+
+			document.getElementById("overlay").classList.add("d-none");
+		});
+
+		currentPicker = this;
+		applyMapChanges();
+		document.onclick = function (e) {
+			if (e.target === currentPicker || e.target.parentElement === currentPicker) return;
+			if (e.target === canvas) {
+				const ctx = canvas.getContext("2d");
+				const imgData = ctx.getImageData(e.offsetX * (canvas.width / canvas.getBoundingClientRect().width), e.offsetY * (canvas.height / canvas.getBoundingClientRect().height), 1, 1);
+				currentPicker.value = "#" + (imgData.data[0] << 16 | imgData.data[1] << 8 | imgData.data[2]).toString(16).padStart(6, "0");
+				updateNormalizer();
+				currentPicker = null;
+				applyMapChanges();
+			}
+			document.body.style.cursor = "";
+			canvas.style.cursor = "";
+			document.onclick = undefined;
+			currentPicker = null;
+			document.getElementById("overlay").classList.remove("d-none");
+		}
+	}
+
+	function normalizeMap() {
+		const ctx = canvas.getContext("2d");
+		const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+		let pixels = imageData.data;
+		const land = [parseInt(landColor.value.slice(1, 3), 16), parseInt(landColor.value.slice(3, 5), 16), parseInt(landColor.value.slice(5, 7), 16)];
+		const water = [parseInt(waterColor.value.slice(1, 3), 16), parseInt(waterColor.value.slice(3, 5), 16), parseInt(waterColor.value.slice(5, 7), 16)];
+		const mountain = [parseInt(mountainColor.value.slice(1, 3), 16), parseInt(mountainColor.value.slice(3, 5), 16), parseInt(mountainColor.value.slice(5, 7), 16)];
+		const landTarget = [parseInt(landTargetColor.value.slice(1, 3), 16), parseInt(landTargetColor.value.slice(3, 5), 16), parseInt(landTargetColor.value.slice(5, 7), 16)];
+		const waterTarget = [parseInt(waterTargetColor.value.slice(1, 3), 16), parseInt(waterTargetColor.value.slice(3, 5), 16), parseInt(waterTargetColor.value.slice(5, 7), 16)];
+		const mountainTarget = [parseInt(mountainTargetColor.value.slice(1, 3), 16), parseInt(mountainTargetColor.value.slice(3, 5), 16), parseInt(mountainTargetColor.value.slice(5, 7), 16)];
+		for (let i = 0; i < pixels.length; i += 4) {
+			const landDiff = normalizeLand ? Math.abs(pixels[i] - landTarget[0]) + Math.abs(pixels[i + 1] - landTarget[1]) + Math.abs(pixels[i + 2] - landTarget[2]) : 766;
+			const waterDiff = normalizeWater ? Math.abs(pixels[i] - waterTarget[0]) + Math.abs(pixels[i + 1] - waterTarget[1]) + Math.abs(pixels[i + 2] - waterTarget[2]) : 766;
+			const mountainDiff = normalizeMountains ? Math.abs(pixels[i] - mountainTarget[0]) + Math.abs(pixels[i + 1] - mountainTarget[1]) + Math.abs(pixels[i + 2] - mountainTarget[2]) : 766;
+			if (landDiff < waterDiff && landDiff < mountainDiff) {
+				pixels[i] = land[0];
+				pixels[i + 1] = land[1];
+				pixels[i + 2] = land[2];
+			} else if (waterDiff < mountainDiff) {
+				pixels[i] = water[0];
+				pixels[i + 1] = water[1];
+				pixels[i + 2] = water[2];
+			} else {
+				pixels[i] = mountain[0];
+				pixels[i + 1] = mountain[1];
+				pixels[i + 2] = mountain[2];
+			}
+			pixels[i + 3] = 255;
+		}
+		ctx.putImageData(imageData, 0, 0);
+		polishMap(defaultData[10], ctx, canvas.width, canvas.height);
+	}
+
+	function updateNormalizer() {
+		document.getElementById("normalize").style.opacity = mapInput.type === "preset" ? "50%" : "100%";
+		waterColor.style.backgroundColor = waterColor.value;
+		landColor.style.backgroundColor = landColor.value;
+		mountainColor.style.backgroundColor = mountainColor.value;
+		waterTargetColor.style.backgroundColor = waterTargetColor.value;
+		landTargetColor.style.backgroundColor = landTargetColor.value;
+		mountainTargetColor.style.backgroundColor = mountainTargetColor.value;
+	}
+
+	const playerColorPicker = document.getElementById("selectableColor");
+	playerColorPicker.value = "";
+	playerColorPicker.onclick = function () {
+		const picker = document.createElement("input");
+		picker.type = "color";
+		picker.value = this.value;
+		picker.style.display = "none";
+		const parent = this;
+		picker.onchange = function () {
+			parent.value = this.value;
+			parent.style.backgroundColor = this.value;
+			updateSpawnOverlay();
+		}
+		document.body.appendChild(picker);
+		picker.click();
+	}
+	document.getElementById("clearColor").onclick = function () {
+		playerColorPicker.value = "";
+		playerColorPicker.style.backgroundColor = "";
+		updateSpawnOverlay();
+	}
+	let playerSpawn = null;
+	let bots = [];
+	let lastBot = null;
+	document.getElementById("clearSpawn").onclick = function () {
+		playerSpawn = null;
+		updateSpawnOverlay();
+	}
+	document.getElementById("playerTeam").onchange = function () {
+		updateSpawnOverlay();
+	}
+	document.getElementById("gameMode").onchange = function () {
+		updateSpawnOverlay();
+	}
+	document.getElementById("selectableSpawn").onclick = function () {
+		var cvas = document.createElement("canvas");
+		cvas.width = 24;
+		cvas.height = 24;
+		var ctx = cvas.getContext("2d");
+		const font = "900 24px " + getComputedStyle(document.body).getPropertyValue("--fa-style-family-classic");
+		document.fonts.load(font).then(() => {
+			ctx.font = font;
+			ctx.fillStyle = "#FF0000";
+			ctx.textAlign = "center";
+			ctx.textBaseline = "middle";
+			ctx.fillText("\uf00d", 12, 12);
+			document.body.style.cursor = `url(${(cvas.toDataURL('image/png'))}) 12 12, auto`;
+
+			ctx.clearRect(0, 0, cvas.width, cvas.height);
+			ctx.fillStyle = getComputedStyle(document.body).getPropertyValue("--bs-body-color");
+			ctx.textAlign = "center";
+			ctx.textBaseline = "middle";
+			ctx.fillText("\uf007", 12, 12);
+			overlay.style.cursor = `url(${(cvas.toDataURL('image/png'))}) 12 12, auto`;
+		});
+
+		currentPicker = this;
+		document.onclick = function (e) {
+			if (e.target === currentPicker || e.target.parentElement === currentPicker) return;
+			if (e.target === overlay) {
+				const posX = e.offsetX / overlay.getBoundingClientRect().width;
+				const posY = e.offsetY / overlay.getBoundingClientRect().height;
+				playerSpawn = [posX, posY];
+				updateSpawnOverlay();
+			}
+			document.body.style.cursor = "";
+			overlay.style.cursor = "";
+			document.onclick = undefined;
+			currentPicker = null;
+		}
+	}
+
+	function writeToData() {
+		let data = {};
+		if (document.getElementById("credit").checked) {
+			data._ = "Created using https://platz1de.github.io/BetterTT/maps/";
+		}
+		data.numberPlayers = bots.length === 0 ? 512 : bots.length + 1;
+		data.modeID = parseInt(document.getElementById("gameMode").value);
+		data.mapID = mapInput.type === "preset" ? parseInt(mapInput.index) : 0;
+		data.seedMap = mapInput.type === "preset" ? parseInt(seedInput.value) : 0;
+		data.seedSpawn = parseInt(spawnSeedInput.value);
+		data.selectableName = document.getElementById("selectableName").value === "";
+		data.selectableColor = document.getElementById("selectableColor").value === "";
+		data.selectableSpawn = playerSpawn === null;
+		data.mapName = document.getElementById("mapName").value || "Unnamed Map";
+		data.description = document.getElementById("mapDescription").value.split("\n") || ["No description"];
+		if (bots.length > 0) {
+			const mapWidth = sizeXInput.value;
+			const mapHeight = sizeYInput.value;
+			const names = [document.getElementById("selectableName").value];
+			const colors = [hexToColor(document.getElementById("selectableColor").value)];
+			const x = [playerSpawn ? playerSpawn[0] * mapWidth : 0];
+			const y = [playerSpawn ? playerSpawn[1] * mapHeight : 0];
+			const teams = [parseInt(document.getElementById("playerTeam").value)];
+			const strength = [0];
+			for (let i = 0; i < bots.length; i++) {
+				names.push(bots[i].name);
+				colors.push(hexToColor(bots[i].color));
+				x.push(bots[i].spawnX * mapWidth);
+				y.push(bots[i].spawnY * mapHeight);
+				teams.push(parseInt(bots[i].team));
+				strength.push(parseInt(bots[i].strength));
+			}
+			data.playerName = names;
+			data.playerColor = colors;
+			data.playerX = x;
+			data.playerY = y;
+			data.playerTeam = teams;
+			data.playerStrength = strength;
+		}
+		if (mapInput.type !== "preset" || parseInt(sizeXInput.value) !== sizeXInput.original || parseInt(sizeYInput.value) !== sizeYInput.original) {
+			data.mapBase64 = canvas.toDataURL("image/png");
+		}
+		return data;
+	}
+
+	document.getElementById("import").onclick = function () {
+		const fileInput = document.createElement("input");
+		fileInput.type = "file";
+		fileInput.accept = ".json";
+		fileInput.onchange = function () {
+			const file = fileInput.files[0];
+			const reader = new FileReader();
+			reader.onload = async () => {
+				const data = JSON.parse(reader.result);
+				let mapWidth = 0, mapHeight = 0;
+				document.getElementById("gameMode").value = data.modeID;
+				if (data.mapBase64 && data.mapBase64 !== "") {
+					mapInput = {type: "image", data: data.mapBase64};
+					await new Promise(r => {
+						const img = new Image();
+						img.onload = function () {
+							canvas.width = mapWidth = img.width;
+							canvas.height = mapHeight = img.height;
+							canvas.getContext("2d").drawImage(img, 0, 0);
+							finishMapLoad()
+							r();
+						}
+						img.src = data.mapBase64;
+					});
+					seedInput.value = data.seedMap;
+				} else {
+					seedInput.value = data.seedMap;
+					mapSelector.value = data.mapID;
+					loadMap(data.mapID, data.seedMap);
+					mapWidth = sizeXInput.value;
+					mapHeight = sizeYInput.value;
+				}
+				spawnSeedInput.value = data.seedSpawn;
+				document.getElementById("selectableName").value = data.selectableName ? "" : data.playerName[0];
+				document.getElementById("selectableColor").value = document.getElementById("selectableColor").style.backgroundColor = data.selectableColor ? "" : "#" + (data.playerColor[0] << 16 | data.playerColor[1] << 8 | data.playerColor[2]).toString(16).padStart(6, "0");
+				playerSpawn = data.selectableSpawn ? null : [data.playerX[0] / mapWidth, data.playerY[0] / mapHeight];
+				document.getElementById("mapName").value = data.mapName;
+				document.getElementById("mapDescription").value = data.description.join("\n");
+				if (data.numberPlayers > 1) {
+					bots = [];
+					for (let i = 1; i < data.numberPlayers; i++) {
+						bots.push({
+							name: data.playerName[i],
+							color: "#" + (data.playerColor[i][0] << 16 | data.playerColor[i][1] << 8 | data.playerColor[i][2]).toString(16).padStart(6, "0"),
+							spawnX: data.playerX[i] / mapWidth,
+							spawnY: data.playerY[i] / mapHeight,
+							team: data.playerTeam[i],
+							strength: data.playerStrength[i]
+						});
+					}
+					lastBot = bots[bots.length - 1];
+					updateSpawnOverlay();
+				}
+			}
+			reader.readAsText(file);
+		}
+		fileInput.click();
+	}
+
+	function hexToColor(hex) {
+		if (!hex) return [0, 0, 0];
+		return [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
+	}
+
+	document.getElementById("save").onclick = function () {
+		const data = writeToData();
+		const a = document.createElement("a");
+		a.href = "data:text/plain;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+		a.download = data.mapName + ".json";
+		a.click();
+	}
+
+	document.getElementById("copy").onclick = function () {
+		const data = writeToData();
+		navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+	}
+
+	document.getElementById("image").onclick = function () {
+		const data = canvas.toDataURL("image/png");
+		const a = document.createElement("a");
+		a.href = data;
+		a.download = (document.getElementById("mapName").value || "Unnamed Map") + ".png";
+		a.click();
+	}
+
+	function updateSpawnOverlay() {
+		const bb = canvas.getBoundingClientRect();
+		const cRatio = bb.width / bb.height;
+		const oRatio = canvas.width / canvas.height;
+		if (oRatio > cRatio) {
+			overlay.style.width = bb.width + "px";
+			overlay.style.height = bb.width / oRatio + "px";
+		} else {
+			overlay.style.width = bb.height * oRatio + "px";
+			overlay.style.height = bb.height + "px";
+		}
+		if (canvas.width > canvas.height) {
+			overlay.width = 5120 * oRatio;
+			overlay.height = 5120;
+		} else {
+			overlay.width = 5120 * oRatio;
+			overlay.height = 5120;
+		}
+		const ctx = overlay.getContext("2d");
+		ctx.clearRect(0, 0, overlay.width, overlay.height);
+		const font = "900 120px " + getComputedStyle(document.body).getPropertyValue("--fa-style-family-classic");
+		document.fonts.load(font).then(() => {
+			ctx.font = font;
+			ctx.textAlign = "center";
+			ctx.textBaseline = "middle";
+			if (playerSpawn) {
+				ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+				ctx.fillRect(playerSpawn[0] * overlay.width - 75, playerSpawn[1] * overlay.height - 75, 150, 150);
+				ctx.fillStyle = getColor(document.getElementById("selectableColor").value || "#000000", parseInt(document.getElementById("playerTeam").value));
+				ctx.fillText("\uf007", playerSpawn[0] * overlay.width, playerSpawn[1] * overlay.height);
+			}
+			for (let i = 0; i < bots.length; i++) {
+				ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+				ctx.fillRect(bots[i].spawnX * overlay.width - 75, bots[i].spawnY * overlay.height - 135, 150, 150);
+				ctx.fillStyle = getColor(bots[i].color, bots[i].team);
+				ctx.fillText("\uf041", bots[i].spawnX * overlay.width, bots[i].spawnY * overlay.height - 60);
+			}
+		});
+	}
+
+	function getColor(color, team) {
+		if (parseInt(document.getElementById("gameMode").value) !== 0) {
+			return colors[team];
+		}
+		return color;
+	}
+
+	document.getElementById("addBot").onclick = function () {
+		var cvas = document.createElement("canvas");
+		cvas.width = 24;
+		cvas.height = 24;
+		var ctx = cvas.getContext("2d");
+		const font = "900 24px " + getComputedStyle(document.body).getPropertyValue("--fa-style-family-classic");
+		document.fonts.load(font).then(() => {
+			ctx.font = font;
+			ctx.fillStyle = "#FF0000";
+			ctx.textAlign = "center";
+			ctx.textBaseline = "middle";
+			ctx.fillText("\uf00d", 12, 12);
+			document.body.style.cursor = `url(${(cvas.toDataURL('image/png'))}) 12 12, auto`;
+
+			ctx.clearRect(0, 0, cvas.width, cvas.height);
+			ctx.fillStyle = getComputedStyle(document.body).getPropertyValue("--bs-body-color");
+			ctx.textAlign = "center";
+			ctx.textBaseline = "middle";
+			ctx.fillText("\uf041", 12, 12);
+			overlay.style.cursor = `url(${(cvas.toDataURL('image/png'))}) 12 24, auto`;
+		});
+
+		currentPicker = this;
+		document.onclick = function (e) {
+			if (e.target === currentPicker || e.target.parentElement === currentPicker) return;
+			if (e.target === overlay) {
+				const posX = e.offsetX / overlay.getBoundingClientRect().width;
+				const posY = e.offsetY / overlay.getBoundingClientRect().height;
+				botDone.int_posX = posX;
+				botDone.int_posY = posY;
+				openBotSettings(-1);
+			}
+			document.body.style.cursor = "";
+			overlay.style.cursor = "";
+			document.onclick = undefined;
+			currentPicker = null;
+		}
+	}
+
+	window.addEventListener("resize", function () {
+		canvas.classList.add("d-none");
+		canvas.style.width = canvas.parentElement.getBoundingClientRect().width + "px";
+		canvas.style.height = canvas.parentElement.getBoundingClientRect().height + "px";
+		canvas.classList.remove("d-none");
+		updateSpawnOverlay();
+	});
+
+	const botName = document.getElementById("botName");
+	const botColor = document.getElementById("botColor");
+	const botTeam = document.getElementById("botTeam");
+	const botStrength = document.getElementById("botStrength");
+	const botDone = document.getElementById("botDone");
+	const botDelete = document.getElementById("botDelete");
+
+	botColor.onclick = function () {
+		const picker = document.createElement("input");
+		picker.type = "color";
+		picker.value = this.value;
+		picker.style.display = "none";
+		const parent = this;
+		picker.onchange = function () {
+			parent.value = this.value;
+			parent.style.backgroundColor = this.value;
+		}
+		document.body.appendChild(picker);
+		picker.click();
+	}
+
+	document.getElementById("botColorRandom").onclick = function () {
+		botColor.value = "#" + Math.floor(Math.random() * 16777215).toString(16);
+		botColor.style.backgroundColor = botColor.value;
+	}
+
+	function openBotSettings(id) {
+		document.getElementById("botSettings").classList.remove("d-none");
+		var data;
+		if (id === -1) {
+			data = lastBot ?? {
+				team: 0,
+				strength: 0,
+			}
+			data = {...data};
+			data.color = "#" + Math.floor(Math.random() * 16777215).toString(16);
+			data.name = "Bot " + (bots.length + 1);
+			data.spawnX = botDone.int_posX;
+			data.spawnY = botDone.int_posY;
+		} else {
+			data = bots[id];
+		}
+		lastBot = data;
+		botName.value = data.name;
+		botColor.value = botColor.style.backgroundColor = data.color;
+		botTeam.value = data.team;
+		botStrength.value = data.strength;
+		botDone.onclick = function () {
+			if (id === -1) {
+				bots.push({
+					name: botName.value,
+					color: botColor.value,
+					team: botTeam.value,
+					strength: botStrength.value,
+					spawnX: botDone.int_posX,
+					spawnY: botDone.int_posY
+				});
+			} else {
+				bots[id].name = botName.value;
+				bots[id].color = botColor.value;
+				bots[id].team = botTeam.value;
+				bots[id].strength = botStrength.value;
+			}
+			lastBot = bots[id === -1 ? bots.length - 1 : id];
+			updateSpawnOverlay();
+			document.getElementById("botSettings").classList.add("d-none");
+		}
+		botDelete.onclick = function () {
+			if (id !== -1) {
+				bots.splice(id, 1);
+				updateSpawnOverlay();
+			}
+			document.getElementById("botSettings").classList.add("d-none");
+		}
+	}
+
+	overlay.onclick = function (e) {
+		const posX = e.offsetX / overlay.getBoundingClientRect().width;
+		const posY = e.offsetY / overlay.getBoundingClientRect().height;
+		const off = 75 / 5120;
+		for (let i = 0; i < bots.length; i++) {
+			if (posX > bots[i].spawnX - off && posX < bots[i].spawnX + off && posY > bots[i].spawnY - off && posY < bots[i].spawnY + off) {
+				openBotSettings(i);
+				return;
+			}
+		}
+	}
+</script>
+</body>
+</html><!--
+     FILE ARCHIVED ON 03:42:13 Apr 02, 2024 AND RETRIEVED FROM THE
+     INTERNET ARCHIVE ON 11:31:34 Apr 07, 2024.
+     JAVASCRIPT APPENDED BY WAYBACK MACHINE, COPYRIGHT INTERNET ARCHIVE.
+
+     ALL OTHER CONTENT MAY ALSO BE PROTECTED BY COPYRIGHT (17 U.S.C.
+     SECTION 108(a)(3)).
+-->
+<!--
+playback timings (ms):
+  captures_list: 0.683
+  exclusion.robots: 0.212
+  exclusion.robots.policy: 0.203
+  cdx.remote: 0.059
+  esindex: 0.011
+  LoadShardBlock: 118.693 (3)
+  PetaboxLoader3.resolve: 76.015 (3)
+  PetaboxLoader3.datanode: 87.377 (4)
+  load_resource: 64.008
+-->
